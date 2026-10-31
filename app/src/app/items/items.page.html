@@ -1,0 +1,193 @@
+<ion-header class="app-header ion-no-border">
+  <ion-toolbar>
+    <ion-title>Lost &amp; Found</ion-title>
+    <ion-buttons slot="end">
+      <ion-button class="filter-button" (click)="filtersOpen.set(true)" aria-label="Filters">
+        <ion-icon slot="icon-only" name="options-outline"></ion-icon>
+        @if (activeFilterCount() > 0) {
+          <span class="filter-count" aria-hidden="true">{{ activeFilterCount() }}</span>
+        }
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+  <ion-toolbar class="search-toolbar">
+    <ion-searchbar
+      class="app-searchbar"
+      [value]="search()"
+      [debounce]="400"
+      placeholder="Search title or description"
+      (ionInput)="onSearch($event)"
+    ></ion-searchbar>
+  </ion-toolbar>
+  <ion-toolbar class="segment-toolbar">
+    <ion-segment class="pill-segment" [value]="type()" (ionChange)="onTypeChange($event)">
+      <ion-segment-button value="all"><ion-label>All</ion-label></ion-segment-button>
+      <ion-segment-button value="lost"><ion-label>Lost</ion-label></ion-segment-button>
+      <ion-segment-button value="found"><ion-label>Found</ion-label></ion-segment-button>
+    </ion-segment>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="app-page">
+  <ion-refresher slot="fixed" (ionRefresh)="onRefresh($event)">
+    <ion-refresher-content></ion-refresher-content>
+  </ion-refresher>
+
+  <!-- Filters from the sheet; tap one to remove it -->
+  @if (activeFilterCount() > 0) {
+    <div class="active-filters">
+      @if (category()) {
+        <button class="filter-chip" (click)="clearCategory()" [attr.aria-label]="'Remove filter ' + category()">
+          {{ category() }}
+          <ion-icon name="close" aria-hidden="true"></ion-icon>
+        </button>
+      }
+      @if (date() !== 'any') {
+        <button class="filter-chip" (click)="clearDate()" [attr.aria-label]="'Remove filter ' + dateLabels[date()]">
+          {{ dateLabels[date()] }}
+          <ion-icon name="close" aria-hidden="true"></ion-icon>
+        </button>
+      }
+      @if (status() !== 'all') {
+        <button
+          class="filter-chip"
+          (click)="clearStatus()"
+          [attr.aria-label]="'Remove filter ' + statusLabels[status()]"
+        >
+          {{ statusLabels[status()] }}
+          <ion-icon name="close" aria-hidden="true"></ion-icon>
+        </button>
+      }
+    </div>
+  }
+
+  <div class="report-list">
+    @if (loading()) {
+      <!-- Placeholder cards while the request is in flight -->
+      @for (n of [1, 2, 3, 4]; track n) {
+        <div class="report-card surface">
+          <ion-skeleton-text [animated]="true" class="report-thumb"></ion-skeleton-text>
+          <div class="report-body">
+            <ion-skeleton-text [animated]="true" style="width: 30%"></ion-skeleton-text>
+            <ion-skeleton-text [animated]="true" style="width: 75%"></ion-skeleton-text>
+            <ion-skeleton-text [animated]="true" style="width: 50%"></ion-skeleton-text>
+          </div>
+        </div>
+      }
+    } @else if (errorMessage()) {
+      <div class="state-message">
+        <div class="state-icon"><ion-icon name="cloud-offline-outline" aria-hidden="true"></ion-icon></div>
+        <h2>Can't load reports</h2>
+        <p>{{ errorMessage() }}</p>
+        <ion-button shape="round" (click)="loadItems()">Try again</ion-button>
+      </div>
+    } @else {
+      @if (items().length > 0) {
+        <p class="result-count">
+          {{ items().length }} {{ items().length === 1 ? 'report' : 'reports' }}{{ isFiltered() ? ' found' : '' }}
+        </p>
+      }
+      @for (item of items(); track item.id) {
+        <button
+          class="report-card surface ion-activatable"
+          [class.report-card--resolved]="item.status === 'resolved'"
+          (click)="openDetails(item)"
+        >
+          @if (item.image_url) {
+            <img class="report-thumb" [src]="item.image_url" [alt]="'Photo of ' + item.title" loading="lazy" />
+          } @else {
+            <div class="report-thumb report-thumb--empty" [class]="'report-thumb--' + item.type">
+              <ion-icon [name]="categoryIcon(item.category)" aria-hidden="true"></ion-icon>
+            </div>
+          }
+          <div class="report-body">
+            <div class="report-pills">
+              <span class="pill" [class]="'pill--' + item.type">{{ item.type === 'lost' ? 'Lost' : 'Found' }}</span>
+              @if (item.status === 'resolved') {
+                <span class="pill pill--resolved">
+                  <ion-icon name="checkmark-circle" aria-hidden="true"></ion-icon>
+                  Resolved
+                </span>
+              }
+            </div>
+            <h2 class="report-title">{{ item.title }}</h2>
+            <p class="report-meta">{{ item.category }} · {{ item.created_at | relativeDate }}</p>
+          </div>
+          <ion-icon class="report-chevron" name="chevron-forward" aria-hidden="true"></ion-icon>
+          <ion-ripple-effect></ion-ripple-effect>
+        </button>
+      } @empty {
+        <div class="state-message">
+          <div class="state-icon">
+            <ion-icon [name]="isFiltered() ? 'search-outline' : 'file-tray-outline'" aria-hidden="true"></ion-icon>
+          </div>
+          <h2>{{ isFiltered() ? 'No matches' : 'No reports yet' }}</h2>
+          <p>{{ emptyMessage() }}</p>
+          @if (isFiltered()) {
+            <ion-button shape="round" fill="outline" (click)="clearAll()">Clear search and filters</ion-button>
+          }
+        </div>
+      }
+    }
+  </div>
+
+  <!-- Filters sheet -->
+  <ion-modal
+    class="filter-sheet"
+    [isOpen]="filtersOpen()"
+    [initialBreakpoint]="0.55"
+    [breakpoints]="[0, 0.55, 0.8]"
+    (didDismiss)="filtersOpen.set(false)"
+  >
+    <ng-template>
+      <ion-header class="ion-no-border">
+        <ion-toolbar>
+          <ion-title>Filters</ion-title>
+          <ion-buttons slot="end">
+            <ion-button (click)="filtersOpen.set(false)">Done</ion-button>
+          </ion-buttons>
+        </ion-toolbar>
+      </ion-header>
+      <ion-content>
+        <ion-list lines="full">
+          <ion-item>
+            <ion-icon slot="start" name="pricetag-outline" aria-hidden="true"></ion-icon>
+            <ion-select
+              label="Category"
+              interface="popover"
+              [value]="category() || 'all'"
+              (ionChange)="onCategoryChange($event)"
+            >
+              <ion-select-option value="all">All categories</ion-select-option>
+              @for (option of categories; track option) {
+                <ion-select-option [value]="option">{{ option }}</ion-select-option>
+              }
+            </ion-select>
+          </ion-item>
+          <ion-item>
+            <ion-icon slot="start" name="calendar-outline" aria-hidden="true"></ion-icon>
+            <ion-select label="Date reported" interface="popover" [value]="date()" (ionChange)="onDateChange($event)">
+              <ion-select-option value="any">{{ dateLabels.any }}</ion-select-option>
+              <ion-select-option value="today">{{ dateLabels.today }}</ion-select-option>
+              <ion-select-option value="week">{{ dateLabels.week }}</ion-select-option>
+              <ion-select-option value="month">{{ dateLabels.month }}</ion-select-option>
+            </ion-select>
+          </ion-item>
+          <ion-item>
+            <ion-icon slot="start" name="checkmark-done-outline" aria-hidden="true"></ion-icon>
+            <ion-select label="Status" interface="popover" [value]="status()" (ionChange)="onStatusChange($event)">
+              <ion-select-option value="all">{{ statusLabels.all }}</ion-select-option>
+              <ion-select-option value="open">{{ statusLabels.open }}</ion-select-option>
+              <ion-select-option value="resolved">{{ statusLabels.resolved }}</ion-select-option>
+            </ion-select>
+          </ion-item>
+        </ion-list>
+        <div class="ion-padding">
+          <ion-button expand="block" shape="round" fill="outline" [disabled]="!isFiltered()" (click)="clearAll()">
+            Clear search and filters
+          </ion-button>
+        </div>
+      </ion-content>
+    </ng-template>
+  </ion-modal>
+</ion-content>

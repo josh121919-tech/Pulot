@@ -1,0 +1,163 @@
+<ion-header class="app-header ion-no-border">
+  <ion-toolbar>
+    <ion-title>Report an item</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="app-page">
+  <div class="report-form">
+    <!-- Lost or Found -->
+    <div class="type-choice" role="radiogroup" aria-label="Report type">
+      <button
+        class="type-option type-option--lost"
+        role="radio"
+        [attr.aria-checked]="type === 'lost'"
+        [class.type-option--selected]="type === 'lost'"
+        (click)="type = 'lost'"
+      >
+        <ion-icon name="help-circle-outline" aria-hidden="true"></ion-icon>
+        <span class="type-option-title">I lost something</span>
+        <span class="type-option-hint">Ask people to look out for it</span>
+      </button>
+      <button
+        class="type-option type-option--found"
+        role="radio"
+        [attr.aria-checked]="type === 'found'"
+        [class.type-option--selected]="type === 'found'"
+        (click)="type = 'found'"
+      >
+        <ion-icon name="hand-left-outline" aria-hidden="true"></ion-icon>
+        <span class="type-option-title">I found something</span>
+        <span class="type-option-hint">Help the owner get it back</span>
+      </button>
+    </div>
+
+    <!-- Details -->
+    <section class="form-section surface">
+      <h2 class="section-title">
+        <span class="section-step">1</span>
+        Item details
+      </h2>
+      <div class="form-fields">
+        <ion-input
+          [(ngModel)]="title"
+          label="Title *"
+          labelPlacement="floating"
+          fill="outline"
+          placeholder="e.g. Black umbrella"
+          [maxlength]="150"
+          [counter]="true"
+        ></ion-input>
+
+        <ion-select
+          [(ngModel)]="category"
+          label="Category *"
+          labelPlacement="floating"
+          fill="outline"
+          interface="action-sheet"
+        >
+          @for (option of categories; track option) {
+            <ion-select-option [value]="option">{{ option }}</ion-select-option>
+          }
+        </ion-select>
+
+        <ion-textarea
+          [(ngModel)]="description"
+          label="Description"
+          labelPlacement="floating"
+          fill="outline"
+          placeholder="Colour, brand, distinguishing marks..."
+          [autoGrow]="true"
+          [maxlength]="2000"
+        ></ion-textarea>
+
+        <ion-input
+          [(ngModel)]="contactInfo"
+          label="Contact info *"
+          labelPlacement="floating"
+          fill="outline"
+          placeholder="Phone, email or where to claim it"
+          [maxlength]="100"
+          helperText="Shown publicly so the owner or finder can reach you."
+        ></ion-input>
+      </div>
+    </section>
+
+    <!-- Camera -->
+    <section class="form-section surface">
+      <h2 class="section-title">
+        <span class="section-step">2</span>
+        Photo
+        <span class="section-optional">Optional</span>
+      </h2>
+      @if (photoPreview(); as preview) {
+        <div class="photo-preview">
+          <img [src]="preview" alt="Selected photo of the item" />
+          <button class="photo-remove" (click)="removePhoto()" aria-label="Remove photo">
+            <ion-icon name="close" aria-hidden="true"></ion-icon>
+          </button>
+        </div>
+        <ion-button expand="block" shape="round" fill="outline" (click)="choosePhoto()">
+          <ion-icon slot="start" name="camera-outline"></ion-icon>
+          Retake photo
+        </ion-button>
+      } @else {
+        <button class="photo-drop" (click)="choosePhoto()">
+          <span class="photo-drop-icon"><ion-icon name="camera-outline" aria-hidden="true"></ion-icon></span>
+          <span class="photo-drop-title">Add a photo</span>
+          <span class="photo-drop-hint">Take one or choose from the gallery. It helps people recognise the item.</span>
+        </button>
+      }
+    </section>
+
+    <!-- Geolocation + Leaflet -->
+    <section class="form-section surface">
+      <h2 class="section-title">
+        <span class="section-step">3</span>
+        {{ type === 'lost' ? 'Where did you lose it? *' : 'Where did you find it? *' }}
+      </h2>
+      <div class="location-buttons">
+        <ion-button shape="round" (click)="getCurrentLocation()" [disabled]="locating()">
+          @if (locating()) {
+            <ion-spinner slot="start" name="crescent"></ion-spinner>
+            Locating...
+          } @else {
+            <ion-icon slot="start" name="locate-outline"></ion-icon>
+            Get Current Location
+          }
+        </ion-button>
+        @if (latitude() === null) {
+          <ion-button shape="round" fill="clear" (click)="pickOnMap()">
+            <ion-icon slot="start" name="map-outline"></ion-icon>
+            Pick on map
+          </ion-button>
+        }
+      </div>
+
+      @if (latitude() !== null && longitude() !== null) {
+        <app-location-map
+          [latitude]="latitude()!"
+          [longitude]="longitude()!"
+          [type]="type"
+          [draggable]="true"
+          (positionChange)="onPinMoved($event)"
+        />
+        <p class="hint">
+          <ion-icon name="location-outline" aria-hidden="true"></ion-icon>
+          {{ locationSummary() }} · Drag the pin or tap the map to adjust.
+        </p>
+      } @else {
+        <p class="hint">Use GPS, or pick the spot on the map yourself.</p>
+      }
+    </section>
+  </div>
+</ion-content>
+
+<ion-footer class="ion-no-border">
+  <ion-toolbar class="submit-toolbar">
+    <ion-button class="submit-button" expand="block" shape="round" (click)="submit()">
+      <ion-icon slot="start" name="send-outline"></ion-icon>
+      Submit report
+    </ion-button>
+  </ion-toolbar>
+</ion-footer>

@@ -1,0 +1,213 @@
+.report-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 4px 16px 24px;
+}
+
+// ---------- Lost / Found choice ----------
+
+.type-choice {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.type-option {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  padding: 14px;
+  border: 2px solid transparent;
+  border-radius: var(--app-radius);
+  background: var(--app-surface);
+  box-shadow: var(--app-shadow);
+  color: var(--ion-text-color);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color 0.15s,
+    background 0.15s;
+
+  ion-icon {
+    margin-bottom: 4px;
+    font-size: 26px;
+    color: var(--app-muted);
+  }
+}
+
+.type-option-title {
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+.type-option-hint {
+  font-size: 0.78rem;
+  line-height: 1.3;
+  color: var(--app-muted);
+}
+
+.type-option--lost.type-option--selected {
+  border-color: var(--ion-color-danger);
+  background: rgba(var(--ion-color-danger-rgb), 0.08);
+
+  ion-icon {
+    color: var(--ion-color-danger);
+  }
+}
+
+.type-option--found.type-option--selected {
+  border-color: var(--ion-color-success);
+  background: rgba(var(--ion-color-success-rgb), 0.08);
+
+  ion-icon {
+    color: var(--ion-color-success);
+  }
+}
+
+// ---------- Sections ----------
+
+.form-section {
+  padding: 16px;
+}
+
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 14px;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.section-step {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: rgba(var(--ion-color-primary-rgb), 0.12);
+  color: var(--ion-color-primary);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.section-optional {
+  margin-left: auto;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--app-muted);
+}
+
+.form-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+// ---------- Photo ----------
+
+.photo-drop {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+  padding: 22px 16px;
+  border: 2px dashed var(--app-border);
+  border-radius: 14px;
+  background: transparent;
+  color: var(--ion-text-color);
+  font: inherit;
+  cursor: pointer;
+}
+
+.photo-drop-icon {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  margin-bottom: 6px;
+  border-radius: 50%;
+  background: rgba(var(--ion-color-primary-rgb), 0.1);
+  color: var(--ion-color-primary);
+  font-size: 26px;
+}
+
+.photo-drop-title {
+  font-weight: 700;
+}
+
+.photo-drop-hint {
+  max-width: 260px;
+  font-size: 0.8rem;
+  line-height: 1.35;
+  color: var(--app-muted);
+}
+
+.photo-preview {
+  position: relative;
+  margin-bottom: 8px;
+
+  img {
+    display: block;
+    width: 100%;
+    max-height: 260px;
+    object-fit: cover;
+    border-radius: 14px;
+  }
+}
+
+.photo-remove {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  font-size: 20px;
+  cursor: pointer;
+}
+
+// ---------- Location ----------
+
+.location-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.hint {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin: 8px 0 0;
+  font-size: 0.82rem;
+  color: var(--app-muted);
+}
+
+// ---------- Submit bar ----------
+
+.submit-toolbar {
+  --background: var(--app-surface);
+  --padding-start: 16px;
+  --padding-end: 16px;
+  --padding-top: 8px;
+  --padding-bottom: 8px;
+  border-top: 1px solid var(--app-border);
+}
+
+.submit-button {
+  --box-shadow: none;
+  height: 48px;
+  margin: 0;
+  font-weight: 700;
+}

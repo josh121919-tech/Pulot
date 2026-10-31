@@ -1,0 +1,181 @@
+// ---------- Header ----------
+
+.search-toolbar,
+.segment-toolbar {
+  --padding-start: 12px;
+  --padding-end: 12px;
+}
+
+.segment-toolbar {
+  --padding-bottom: 8px;
+}
+
+.app-searchbar {
+  --background: var(--app-surface);
+  --border-radius: 14px;
+  --box-shadow: var(--app-shadow);
+  padding: 0;
+}
+
+.filter-button {
+  position: relative;
+}
+
+.filter-count {
+  position: absolute;
+  top: 2px;
+  right: -2px;
+  display: grid;
+  place-items: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: var(--ion-color-primary);
+  color: var(--ion-color-primary-contrast);
+  font-size: 0.68rem;
+  font-weight: 700;
+}
+
+// ---------- Active filter chips ----------
+
+.active-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 4px 16px 0;
+}
+
+.filter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px 6px 12px;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(var(--ion-color-primary-rgb), 0.12);
+  color: var(--ion-color-primary);
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+
+  ion-icon {
+    font-size: 1rem;
+  }
+}
+
+// ---------- Report list ----------
+
+.report-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 8px 16px 24px;
+}
+
+.result-count {
+  margin: 4px 2px 0;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--app-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.report-card {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  padding: 10px 12px 10px 10px;
+  border: 0;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.report-thumb {
+  flex-shrink: 0;
+  width: 84px;
+  height: 84px;
+  margin: 0;
+  border-radius: 12px;
+  object-fit: cover;
+}
+
+.report-thumb--empty {
+  display: grid;
+  place-items: center;
+  font-size: 34px;
+}
+
+.report-thumb--lost {
+  color: var(--ion-color-danger);
+  background: rgba(var(--ion-color-danger-rgb), 0.1);
+}
+
+.report-thumb--found {
+  color: var(--ion-color-success);
+  background: rgba(var(--ion-color-success-rgb), 0.11);
+}
+
+.report-body {
+  flex: 1;
+  min-width: 0; // lets the title truncate instead of widening the card
+}
+
+.report-pills {
+  display: flex;
+  gap: 6px;
+}
+
+.report-title {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  margin: 6px 0 4px;
+  font-size: 1rem;
+  font-weight: 650;
+  line-height: 1.3;
+  color: var(--ion-text-color);
+}
+
+.report-meta {
+  margin: 0;
+  font-size: 0.82rem;
+  color: var(--app-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.report-chevron {
+  flex-shrink: 0;
+  font-size: 18px;
+  color: var(--app-muted);
+  opacity: 0.6;
+}
+
+// A resolved report stays visible but steps back.
+.report-card--resolved {
+  .report-thumb {
+    opacity: 0.5;
+    filter: grayscale(0.7);
+  }
+
+  .report-title {
+    color: var(--app-muted);
+  }
+}
+
+// ---------- Filters sheet ----------
+
+.filter-sheet ion-item ion-icon[slot='start'] {
+  margin-inline-end: 16px;
+  color: var(--app-muted);
+}

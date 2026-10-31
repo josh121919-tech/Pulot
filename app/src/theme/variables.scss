@@ -1,0 +1,190 @@
+// App theme. Loaded after global.scss, so these values override Ionic's defaults
+// (including its dark palette); the dark versions are in the media query below.
+// https://ionicframework.com/docs/theming/
+
+:root {
+  // Brand: indigo. Lost = coral red, found = green (pins, badges, buttons).
+  --ion-color-primary: #4f46e5;
+  --ion-color-primary-rgb: 79, 70, 229;
+  --ion-color-primary-contrast: #ffffff;
+  --ion-color-primary-contrast-rgb: 255, 255, 255;
+  --ion-color-primary-shade: #4640ca;
+  --ion-color-primary-tint: #6159e8;
+
+  --ion-color-danger: #dc3d43;
+  --ion-color-danger-rgb: 220, 61, 67;
+  --ion-color-danger-contrast: #ffffff;
+  --ion-color-danger-contrast-rgb: 255, 255, 255;
+  --ion-color-danger-shade: #c2363b;
+  --ion-color-danger-tint: #e05056;
+
+  --ion-color-success: #1f8a5b;
+  --ion-color-success-rgb: 31, 138, 91;
+  --ion-color-success-contrast: #ffffff;
+  --ion-color-success-contrast-rgb: 255, 255, 255;
+  --ion-color-success-shade: #1b7950;
+  --ion-color-success-tint: #35966b;
+
+  // Surfaces used by the pages (not Ionic variables).
+  --app-bg: #f3f4f8;
+  --app-surface: #ffffff;
+  --app-surface-2: #e9eaf1;
+  --app-border: #e2e4ec;
+  --app-muted: #646a7a;
+  --app-shadow: 0 1px 2px rgba(20, 24, 40, 0.06), 0 4px 14px rgba(20, 24, 40, 0.06);
+  --app-radius: 16px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --ion-color-primary: #6e67f2;
+    --ion-color-primary-rgb: 110, 103, 242;
+    --ion-color-primary-shade: #615bd5;
+    --ion-color-primary-tint: #7d76f3;
+
+    --ion-color-danger: #ef5f64;
+    --ion-color-danger-rgb: 239, 95, 100;
+    --ion-color-danger-shade: #d25458;
+    --ion-color-danger-tint: #f16f74;
+
+    --ion-color-success: #34a873;
+    --ion-color-success-rgb: 52, 168, 115;
+    --ion-color-success-shade: #2e9465;
+    --ion-color-success-tint: #48b181;
+
+    --app-bg: #0e1015;
+    --app-surface: #181b22;
+    --app-surface-2: #22262f;
+    --app-border: #2a2e38;
+    --app-muted: #9ba1ae;
+    --app-shadow: none;
+  }
+}
+
+// ---------- Shared pieces used on several pages ----------
+
+// Page background behind the cards.
+ion-content.app-page {
+  --background: var(--app-bg);
+}
+
+// Flat headers that blend into the page.
+ion-header.app-header ion-toolbar {
+  --background: var(--app-bg);
+  --border-width: 0;
+}
+
+ion-header.app-header ion-title {
+  font-size: 1.35rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+// Sentence-case buttons instead of Material's all caps.
+ion-button {
+  text-transform: none;
+  letter-spacing: 0;
+  font-weight: 600;
+}
+
+ion-tab-bar {
+  --background: var(--app-surface);
+  --border: 1px solid var(--app-border);
+}
+
+// Pill-shaped segment (All / Lost / Found).
+ion-segment.pill-segment {
+  --background: var(--app-surface-2);
+  padding: 4px;
+  border-radius: 999px;
+
+  ion-segment-button {
+    --indicator-height: 0;
+    --background-checked: var(--app-surface);
+    --color: var(--app-muted);
+    --color-checked: var(--ion-text-color);
+    --border-radius: 999px;
+    min-height: 36px;
+    margin: 0;
+    text-transform: none;
+    font-weight: 600;
+    letter-spacing: 0;
+  }
+
+  ion-segment-button.segment-button-checked {
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+  }
+}
+
+// Small rounded labels: Lost, Found, Resolved.
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  line-height: 1.3;
+
+  ion-icon {
+    font-size: 0.9rem;
+  }
+}
+
+.pill--lost {
+  color: var(--ion-color-danger);
+  background: rgba(var(--ion-color-danger-rgb), 0.13);
+}
+
+.pill--found {
+  color: var(--ion-color-success);
+  background: rgba(var(--ion-color-success-rgb), 0.14);
+}
+
+.pill--resolved {
+  color: var(--app-muted);
+  background: var(--app-surface-2);
+}
+
+// White (or dark) rounded panel.
+.surface {
+  background: var(--app-surface);
+  border-radius: var(--app-radius);
+  box-shadow: var(--app-shadow);
+}
+
+// Centered message for empty, error and no-results states.
+.state-message {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 56px 32px;
+  text-align: center;
+  color: var(--app-muted);
+
+  .state-icon {
+    display: grid;
+    place-items: center;
+    width: 72px;
+    height: 72px;
+    margin-bottom: 12px;
+    border-radius: 50%;
+    background: rgba(var(--ion-color-primary-rgb), 0.1);
+    color: var(--ion-color-primary);
+    font-size: 34px;
+  }
+
+  h2 {
+    margin: 0 0 4px;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--ion-text-color);
+  }
+
+  p {
+    margin: 0 0 16px;
+    max-width: 280px;
+    line-height: 1.45;
+  }
+}

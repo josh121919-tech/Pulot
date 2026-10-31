@@ -1,0 +1,256 @@
+import { Component, computed, inject, signal } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
+import { Camera } from '@capacitor/camera';
+import { Capacitor } from '@capacitor/core';
+import { Geolocation } from '@capacitor/geolocation';
+import {
+  ActionSheetController,
+  IonButton,
+  IonContent,
+  IonFooter,
+  IonHeader,
+  IonIcon,
+  IonInput,
+  IonSelect,
+  IonSelectOption,
+  IonSpinner,
+  IonTextarea,
+  IonTitle,
+  IonToolbar,
+  LoadingController,
+  ToastController,
+} from '@ionic/angular';
+import { addIcons } from 'ionicons';
+import {
+  cameraOutline,
+  close,
+  handLeftOutline,
+  helpCircleOutline,
+  locateOutline,
+  locationOutline,
+  mapOutline,
+  sendOutline,
+} from 'ionicons/icons';
+
+import { environment } from '../../environments/environment';
+import type { LatLng } from '../components/location-map/location-map.component';
+import { LocationMapComponent } from '../components/location-map/location-map.component';
+import { ITEM_CATEGORIES, type ItemType } from '../models/item.model';
+import { ItemService } from '../services/item.service';
+
+// Report tab: form + Camera + Geolocation/Leaflet, sent with POST /api/items.php.
+@Component({
+  selector: 'app-report',
+  templateUrl: 'report.page.html',
+  styleUrls: ['report.page.scss'],
+  imports: [
+    FormsModule,
+    IonButton,
+    IonContent,
+    IonFooter,
+    IonHeader,
+    IonIcon,
+    IonInput,
+    IonSelect,
+    IonSelectOption,
+    IonSpinner,
+    IonTextarea,
+    IonTitle,
+    IonToolbar,
+    LocationMapComponent,
+  ],
+})
+export class ReportPage {
+  private itemService = inject(ItemService);
+  private actionSheetCtrl = inject(ActionSheetController);
+  private loadingCtrl = inject(LoadingController);
+  private toastCtrl = inject(ToastController);
+  private router = inject(Router);
+
+  readonly categories = ITEM_CATEGORIES;
+
+  // Form fields, bound with [(ngModel)].
+  type: ItemType = 'lost';
+  title = '';
+  category = '';
+  description = '';
+  contactInfo = '';
+
+  // Photo: a preview URL for <img>, and the file itself for the upload.
+  photoPreview = signal<string | null>(null);
+  private photoBlob: Blob | null = null;
+
+  // Location: null until GPS or the user sets it.
+  latitude = signal<number | null>(null);
+  longitude = signal<number | null>(null);
+  accuracy = signal<number | null>(null);
+  locating = signal(false);
+
+  // e.g. "15.48650, 120.97340 (±12 m)"; the accuracy part only appears for a GPS fix.
+  locationSummary = computed(() => {
+    const coords = `${this.latitude()?.toFixed(5)}, ${this.longitude()?.toFixed(5)}`;
+    const accuracy = this.accuracy();
+    return accuracy === null ? coords : `${coords} (±${accuracy} m)`;
+  });
+
+  constructor() {
+    addIcons({
+      cameraOutline,
+      close,
+      handLeftOutline,
+      helpCircleOutline,
+      locateOutline,
+      locationOutline,
+      mapOutline,
+      sendOutline,
+    });
+  }
+
+  // ---------- Camera ----------
+
+  // Asks "Take photo" or "Choose from gallery" (Camera 8 replaced CameraSource.Prompt
+  // with these two separate calls), then keeps the result for preview and upload.
+  async choosePhoto(): Promise<void> {
+    const sheet = await this.actionSheetCtrl.create({
+      header: 'Add a photo of the item',
+      buttons: [
+        { text: 'Take photo', data: 'camera' },
+        { text: 'Choose from gallery', data: 'gallery' },
+        { text: 'Cancel', role: 'cancel' },
+      ],
+    });
+    await sheet.present();
+    const { data } = await sheet.onDidDismiss<'camera' | 'gallery'>();
+    if (!data) {
+      return;
+    }
+
+    try {
+      const photo =
+        data === 'camera'
+          ? await Camera.takePhoto({ quality: 70, correctOrientation: true })
+          : (await Camera.chooseFromGallery({})).results[0];
+
+      if (!photo?.webPath) {
+        return;
+      }
+      // webPath is a URL the WebView can read, so fetch() turns it into a Blob for FormData.
+      const response = await fetch(photo.webPath);
+      this.photoBlob = await response.blob();
+      this.photoPreview.set(photo.webPath);
+    } catch (err) {
+      // Closing the camera without taking a picture also lands here; that is not an error.
+      const message = String((err as Error)?.message ?? err).toLowerCase();
+      if (!message.includes('cancel') && !message.includes('no picture') && !message.includes('no image')) {
+        await this.showToast('Could not get the photo. Check the camera permission and try again.', 'danger');
+      }
+    }
+  }
+
+  removePhoto(): void {
+    this.photoBlob = null;
+    this.photoPreview.set(null);
+  }
+
+  // ---------- Geolocation ----------
+
+  async getCurrentLocation(): Promise<void> {
+    this.locating.set(true);
+    try {
+      // On a phone, ask for location permission first (the browser asks by itself).
+      if (Capacitor.isNativePlatform()) {
+        const permission = await Geolocation.requestPermissions();
+        if (permission.location !== 'granted') {
+          await this.showToast('Location permission was denied. Tap "Pick on map" to set the pin yourself.', 'warning');
+          return;
+        }
+      }
+
+      const position = await Geolocation.getCurrentPosition({ enableHighAccuracy: true, timeout: 15000 });
+      this.latitude.set(position.coords.latitude);
+      this.longitude.set(position.coords.longitude);
+      this.accuracy.set(Math.round(position.coords.accuracy));
+    } catch {
+      await this.showToast('Could not get your location. Turn on GPS, or tap "Pick on map".', 'warning');
+    } finally {
+      this.locating.set(false);
+    }
+  }
+
+  // Fallback when GPS is unavailable: drop the pin at the default spot for the user to move.
+  pickOnMap(): void {
+    this.latitude.set(environment.defaultMapCenter.latitude);
+    this.longitude.set(environment.defaultMapCenter.longitude);
+    this.accuracy.set(null);
+  }
+
+  // Called by the map when the pin is dragged or the map is tapped.
+  onPinMoved(position: LatLng): void {
+    this.latitude.set(position.latitude);
+    this.longitude.set(position.longitude);
+    this.accuracy.set(null); // now set by hand, so GPS accuracy no longer applies
+  }
+
+  // ---------- Submit ----------
+
+  async submit(): Promise<void> {
+    const missing = this.missingFields();
+    if (missing.length > 0) {
+      await this.showToast(`Please add: ${missing.join(', ')}.`, 'warning');
+      return;
+    }
+
+    const loading = await this.loadingCtrl.create({ message: 'Submitting report...' });
+    await loading.present();
+
+    const item = {
+      title: this.title.trim(),
+      description: this.description.trim(),
+      type: this.type,
+      category: this.category,
+      latitude: this.latitude()!,
+      longitude: this.longitude()!,
+      contact_info: this.contactInfo.trim(),
+    };
+
+    this.itemService.createItem(item, this.photoBlob).subscribe({
+      next: async (result) => {
+        await loading.dismiss();
+        await this.showToast(result.message ?? 'Report submitted.', 'success');
+        this.resetForm();
+        this.router.navigateByUrl('/items');
+      },
+      error: async (err) => {
+        await loading.dismiss();
+        await this.showToast(this.itemService.describeError(err), 'danger');
+      },
+    });
+  }
+
+  private missingFields(): string[] {
+    const missing: string[] = [];
+    if (!this.title.trim()) missing.push('a title');
+    if (!this.category) missing.push('a category');
+    if (!this.contactInfo.trim()) missing.push('your contact info');
+    if (this.latitude() === null) missing.push('the location');
+    return missing;
+  }
+
+  private resetForm(): void {
+    this.type = 'lost';
+    this.title = '';
+    this.category = '';
+    this.description = '';
+    this.contactInfo = '';
+    this.removePhoto();
+    this.latitude.set(null);
+    this.longitude.set(null);
+    this.accuracy.set(null);
+  }
+
+  private async showToast(message: string, color: 'success' | 'warning' | 'danger'): Promise<void> {
+    const toast = await this.toastCtrl.create({ message, color, duration: 3000, position: 'top' });
+    await toast.present();
+  }
+}

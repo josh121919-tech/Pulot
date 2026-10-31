@@ -1,0 +1,137 @@
+.detail {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 4px 16px 32px;
+}
+
+.detail-hero {
+  display: block;
+  width: 100%;
+  height: 240px;
+  border-radius: var(--app-radius);
+  object-fit: cover;
+}
+
+.detail-hero--empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 150px;
+  font-size: 0.85rem;
+  font-weight: 600;
+
+  ion-icon {
+    font-size: 48px;
+  }
+}
+
+.detail-hero--lost {
+  color: var(--ion-color-danger);
+  background: rgba(var(--ion-color-danger-rgb), 0.1);
+}
+
+.detail-hero--found {
+  color: var(--ion-color-success);
+  background: rgba(var(--ion-color-success-rgb), 0.11);
+}
+
+.detail-pills {
+  display: flex;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.detail-title {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 750;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+}
+
+.detail-description {
+  margin: 0;
+  line-height: 1.5;
+  white-space: pre-line; // keep the reporter's line breaks
+  color: var(--app-muted);
+}
+
+.resolved-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: rgba(var(--ion-color-success-rgb), 0.12);
+  color: var(--ion-text-color);
+  line-height: 1.4;
+
+  ion-icon {
+    flex-shrink: 0;
+    font-size: 24px;
+    color: var(--ion-color-success);
+  }
+}
+
+.info-card {
+  padding: 4px 16px;
+}
+
+.info-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 0;
+
+  & + & {
+    border-top: 1px solid var(--app-border);
+  }
+}
+
+.info-icon {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  background: rgba(var(--ion-color-primary-rgb), 0.1);
+  color: var(--ion-color-primary);
+  font-size: 19px;
+}
+
+.info-label {
+  margin: 0 0 2px;
+  font-size: 0.78rem;
+  color: var(--app-muted);
+}
+
+.info-value {
+  margin: 0;
+  font-weight: 600;
+  word-break: break-word;
+}
+
+.map-card {
+  padding: 6px;
+}
+
+.owner-card {
+  padding: 14px 16px 10px;
+}
+
+.owner-note {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 6px;
+  font-size: 0.88rem;
+  color: var(--app-muted);
+
+  ion-icon {
+    font-size: 20px;
+  }
+}
