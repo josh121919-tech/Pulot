@@ -1,4 +1,4 @@
--- Campus Lost and Found Reporting App
+-- Pulot: Campus Lost and Found Reporting App
 -- Creates the database and the single `items` table used by api/items.php.
 -- Import through phpMyAdmin, or run: mysql -u root < sql/lost_found.sql
 

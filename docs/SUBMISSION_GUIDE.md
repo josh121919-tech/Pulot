@@ -1,4 +1,4 @@
-# Campus Lost & Found — Submission Companion Guide
+# Pulot — Submission Companion Guide
 
 Material for the 8–12 minute recording and the 3–5 page report. Replace every
 `[bracketed]` placeholder with your group's own details before submitting.

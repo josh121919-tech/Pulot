@@ -1,4 +1,4 @@
--- Campus Lost and Found: table only, for a hosted server.
+-- Pulot (campus lost and found): table only, for a hosted server.
 -- On shared hosting (cPanel) you create the database in the control panel first,
 -- then select it in phpMyAdmin and import this file. It has no CREATE DATABASE or USE,
 -- because shared hosts do not allow them. Local XAMPP setups use lost_found.sql instead.

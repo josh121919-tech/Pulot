@@ -1,6 +1,6 @@
-# Campus Lost & Found
+# Pulot
 
-A small Ionic + Angular + Capacitor app for reporting items lost or found on campus.
+Pulot (Filipino for "to pick up") is a small Ionic + Angular + Capacitor app for reporting items lost or found on campus.
 A student takes a photo of the item, pins where it was lost or found on a map, and
 submits the report. Everyone can browse the reports, filter Lost / Found, and open a
 report to see the photo, the contact person and the spot on the map.
