@@ -37,6 +37,7 @@ import { environment } from '../../environments/environment';
 import type { LatLng } from '../components/location-map/location-map.component';
 import { LocationMapComponent } from '../components/location-map/location-map.component';
 import { ITEM_CATEGORIES, type ItemType } from '../models/item.model';
+import { HapticsService } from '../services/haptics.service';
 import { ItemService } from '../services/item.service';
 
 // Report tab: form + Camera + Geolocation/Leaflet, sent with POST /api/items.php.
@@ -63,6 +64,7 @@ import { ItemService } from '../services/item.service';
 })
 export class ReportPage {
   private itemService = inject(ItemService);
+  private haptics = inject(HapticsService);
   private actionSheetCtrl = inject(ActionSheetController);
   private loadingCtrl = inject(LoadingController);
   private toastCtrl = inject(ToastController);
@@ -249,7 +251,13 @@ export class ReportPage {
     this.accuracy.set(null);
   }
 
+  // Every message on this page also gets the matching vibration (Haptics notification type).
   private async showToast(message: string, color: 'success' | 'warning' | 'danger'): Promise<void> {
+    void (color === 'success'
+      ? this.haptics.success()
+      : color === 'warning'
+        ? this.haptics.warning()
+        : this.haptics.error());
     const toast = await this.toastCtrl.create({ message, color, duration: 3000, position: 'top' });
     await toast.present();
   }

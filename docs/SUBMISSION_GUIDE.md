@@ -21,13 +21,15 @@ exactly where the item was lost or found.
   category, date and status, and open one to see the contact person and the exact spot on a map.
 - **Resolve**: the person who submitted a report can mark it resolved (item returned or
   claimed) from their own phone. It stays visible, labelled Resolved.
+- **Feedback**: besides the on-screen message, the phone vibrates with the result:
+  success, warning (something to fix first) or error (the server or network failed).
 
 ---
 
 ## 2. Suggested walkthrough order (3–4 min)
 
 1. Open the app on the **Browse** tab. Point out the All / Lost / Found filter and pull to refresh.
-2. Go to **Report**. Tap **Submit report** with an empty form to show the warning toast (error handling).
+2. Go to **Report**. Tap **Submit report** with an empty form to show the warning toast (error handling). The phone also gives a warning vibration.
 3. Choose **I found something**, fill in the title, category, description and contact info.
 4. Tap **Add photo**, then **Take photo**. Show the preview, then **Retake photo**.
 5. Tap **Get Current Location**: the permission prompt, then the map with the pin and the accuracy (±m).
@@ -156,6 +158,8 @@ your own actual results.
 | 18 | Mark own report resolved | Confirm, then Resolved banner, badge on the card, `resolved_at` set | Confirm dialog, PUT 200, "Report marked as resolved." toast, banner with date, Resolved badge in the list; Reopen cleared it | Pass |
 | 19 | Change someone else's report | Not possible | No button on a report from another device; PUT with a wrong token gave 403 | Pass |
 | 20 | Owner token kept after submitting | The phone can resolve the report it just created | After submitting from the Report tab, the new report's id was in the phone's stored tokens | Pass |
+| 21 | Vibration matches the result (browser check) | Warning, success and error patterns | Empty submit gave the warning pattern; Mark as resolved gave the success pattern; a rejected status change (403) gave the error pattern | Pass |
+| 22 | Vibration on a real phone | Phone vibrates on submit, resolve and errors | Not yet tested | Not yet tested |
 
 ### Observed issues and usability notes
 
@@ -205,6 +209,8 @@ group reviewed, tested or modified (required by the case study outline).
 <uses-feature android:name="android.hardware.camera" android:required="false" />
 <uses-feature android:name="android.hardware.location.gps" android:required="false" />
 ```
+
+`android.permission.VIBRATE` is added to the final manifest by the `@capacitor/haptics` plugin.
 
 Plus `android:usesCleartextTraffic="true"` on `<application>` and `androidScheme: 'http'`
 in `capacitor.config.ts`, so the app can reach a plain-http XAMPP server on the LAN. This

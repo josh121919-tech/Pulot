@@ -33,6 +33,7 @@ import {
 
 import { LocationMapComponent } from '../components/location-map/location-map.component';
 import { CATEGORY_ICONS, type Item, type ItemStatus } from '../models/item.model';
+import { HapticsService } from '../services/haptics.service';
 import { ItemService } from '../services/item.service';
 
 // Full-screen modal opened from the Browse list: photo, details and the map pin.
@@ -60,6 +61,7 @@ export class ItemDetailComponent {
   private alertCtrl = inject(AlertController);
   private toastCtrl = inject(ToastController);
   private itemService = inject(ItemService);
+  private haptics = inject(HapticsService);
 
   // Passed in through ModalController.create({ componentProps: { item } }).
   item = input.required<Item>();
@@ -136,7 +138,9 @@ export class ItemDetailComponent {
     });
   }
 
+  // The vibration matches the message: success when the status changed, error when it failed.
   private async showToast(message: string, color: 'success' | 'danger'): Promise<void> {
+    void (color === 'success' ? this.haptics.success() : this.haptics.error());
     const toast = await this.toastCtrl.create({ message, color, duration: 3000, position: 'top' });
     await toast.present();
   }

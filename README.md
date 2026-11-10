@@ -8,7 +8,7 @@ report to see the photo, the contact person and the spot on the map.
 | Part     | Technology                                                        |
 | -------- | ----------------------------------------------------------------- |
 | App      | Ionic 9, Angular 22 (standalone components, signals), Capacitor 8 |
-| Device   | `@capacitor/camera`, `@capacitor/geolocation`, Leaflet + OpenStreetMap |
+| Device   | `@capacitor/camera`, `@capacitor/geolocation`, `@capacitor/haptics`, Leaflet + OpenStreetMap |
 | Data     | Angular `HttpClient` → PHP 8 REST endpoint (PDO) → MariaDB/MySQL  |
 
 ```
@@ -113,6 +113,8 @@ plain-http XAMPP server on the LAN. With the default `https` scheme those calls 
   **Filters** (top right) for category, date and status. Tap a card for details and the map.
 - **Resolve**: open a report you submitted from this phone and tap **Mark as resolved**
   (or **Reopen report**).
+- **Feedback**: every message on the Report tab and the details screen comes with a short
+  vibration that matches it: success, warning (something to fix) or error.
 - **Report**: choose Lost or Found, fill in the title, category and contact info, add a
   photo (optional), tap **Get Current Location** (or **Pick on map**), drag the pin if
   needed, then **Submit report**.
