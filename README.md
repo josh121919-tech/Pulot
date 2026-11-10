@@ -79,6 +79,12 @@ picker) and the location comes from the browser.
 
 ## 3. Run on an Android phone
 
+The APK built from this repository uses the online API at
+`https://pulot.alwaysdata.net/api/items.php` (the code from the
+[Pulot_BE_API](https://github.com/josh121919-tech/Pulot_BE_API) repository on alwaysdata's free
+plan), so it works on any Wi-Fi or mobile data. To use your own XAMPP PC instead, follow the
+steps below.
+
 On a phone, `localhost` means the phone, so the app needs the PC's address.
 
 1. Find the PC's IPv4 address with `ipconfig` (e.g. `192.168.1.23`). Phone and PC must be

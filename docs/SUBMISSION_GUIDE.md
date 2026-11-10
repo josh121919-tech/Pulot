@@ -162,6 +162,8 @@ your own actual results.
 | 22 | Vibration on a real phone | Phone vibrates on submit, resolve and errors | Not yet tested | Not yet tested |
 | 23 | Contact number | An invalid number is refused; a valid one is saved and can be tapped to call | "12345" gave "Enter a valid mobile number, e.g. 0917 123 4567."; "0917 123 4567" was saved as `Phone: 0917 123 4567` and the details showed "Contact number" with a `tel:09171234567` link | Pass |
 | 24 | Facebook name | The name is saved and shown with the Facebook label | "Juan Dela Cruz" was saved as `Facebook: Juan Dela Cruz` and the details showed "Facebook name" with the Facebook icon | Pass |
+| 25 | Online API answers app requests | JSON, not a browser check page, with the app's CORS headers | `https://pulot.alwaysdata.net/api/items.php` returned `{"success":true,"data":[]}` (200) and allowed `http://localhost` for GET and POST. A free InfinityFree site was tried first and rejected: it answers with an `aes.js` browser check that apps cannot pass | Pass |
+| 26 | APK on mobile data, using the online API | Reports load and a new report with a photo is saved | Not yet tested | Not yet tested |
 
 ### Observed issues and usability notes
 
@@ -226,6 +228,6 @@ is the `Http failure response ... 0` problem shown on the emulator in class.
 - [ ] Run rows 11–15 of the test table on the phone and fill in the actual results
 - [ ] Record 8–12 min: problem → walkthrough → 3 snippets → testing/limitations → AI disclosure
 - [ ] 3–5 page PDF report following the outline (project info, problem, features, technical, testing, AI)
-- [ ] APK with install notes and the API address it uses
+- [ ] APK with install notes and the API address it uses (`https://pulot.alwaysdata.net/api/items.php`)
 - [ ] Repository or Drive ZIP link (no passwords; `api/config.local.php` stays out)
 - [ ] Deadline: the instructor's calendar in the Oct 30 recording showed **ITWS07 on Nov 12, 2026**. Confirm this with the instructor.
