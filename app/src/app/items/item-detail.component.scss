@@ -115,6 +115,13 @@
   word-break: break-word;
 }
 
+// Phone number: tap to open the dialer.
+.info-link {
+  display: inline-block;
+  color: var(--ion-color-primary);
+  text-decoration: none;
+}
+
 .map-card {
   padding: 6px;
 }

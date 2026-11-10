@@ -30,7 +30,7 @@ exactly where the item was lost or found.
 
 1. Open the app on the **Browse** tab. Point out the All / Lost / Found filter and pull to refresh.
 2. Go to **Report**. Tap **Submit report** with an empty form to show the warning toast (error handling). The phone also gives a warning vibration.
-3. Choose **I found something**, fill in the title, category, description and contact info.
+3. Choose **I found something**, fill in the title, category and description. Under **How can people reach you?** pick **Contact number** or **Facebook name** and fill it in.
 4. Tap **Add photo**, then **Take photo**. Show the preview, then **Retake photo**.
 5. Tap **Get Current Location**: the permission prompt, then the map with the pin and the accuracy (±m).
 6. Drag the pin to the exact spot; the coordinates under the map update.
@@ -160,6 +160,8 @@ your own actual results.
 | 20 | Owner token kept after submitting | The phone can resolve the report it just created | After submitting from the Report tab, the new report's id was in the phone's stored tokens | Pass |
 | 21 | Vibration matches the result (browser check) | Warning, success and error patterns | Empty submit gave the warning pattern; Mark as resolved gave the success pattern; a rejected status change (403) gave the error pattern | Pass |
 | 22 | Vibration on a real phone | Phone vibrates on submit, resolve and errors | Not yet tested | Not yet tested |
+| 23 | Contact number | An invalid number is refused; a valid one is saved and can be tapped to call | "12345" gave "Enter a valid mobile number, e.g. 0917 123 4567."; "0917 123 4567" was saved as `Phone: 0917 123 4567` and the details showed "Contact number" with a `tel:09171234567` link | Pass |
+| 24 | Facebook name | The name is saved and shown with the Facebook label | "Juan Dela Cruz" was saved as `Facebook: Juan Dela Cruz` and the details showed "Facebook name" with the Facebook icon | Pass |
 
 ### Observed issues and usability notes
 

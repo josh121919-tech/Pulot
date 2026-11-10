@@ -45,10 +45,28 @@
 
     <div class="info-card surface">
       <div class="info-row">
-        <div class="info-icon"><ion-icon name="call-outline" aria-hidden="true"></ion-icon></div>
+        <div class="info-icon">
+          <ion-icon
+            [name]="contact().method === 'facebook' ? 'logo-facebook' : 'call-outline'"
+            aria-hidden="true"
+          ></ion-icon>
+        </div>
         <div>
-          <p class="info-label">Contact</p>
-          <p class="info-value">{{ current().contact_info }}</p>
+          @switch (contact().method) {
+            @case ('phone') {
+              <p class="info-label">Contact number</p>
+              <!-- tel: opens the phone's dialer with the number filled in -->
+              <a class="info-value info-link" [href]="'tel:' + phoneDigits()">{{ contact().value }}</a>
+            }
+            @case ('facebook') {
+              <p class="info-label">Facebook name</p>
+              <p class="info-value">{{ contact().value }}</p>
+            }
+            @default {
+              <p class="info-label">Contact</p>
+              <p class="info-value">{{ contact().value }}</p>
+            }
+          }
         </div>
       </div>
       <div class="info-row">

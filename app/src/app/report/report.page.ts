@@ -12,6 +12,9 @@ import {
   IonHeader,
   IonIcon,
   IonInput,
+  IonLabel,
+  IonSegment,
+  IonSegmentButton,
   IonSelect,
   IonSelectOption,
   IonSpinner,
@@ -29,6 +32,7 @@ import {
   helpCircleOutline,
   locateOutline,
   locationOutline,
+  logoFacebook,
   mapOutline,
   sendOutline,
 } from 'ionicons/icons';
@@ -36,7 +40,7 @@ import {
 import { environment } from '../../environments/environment';
 import type { LatLng } from '../components/location-map/location-map.component';
 import { LocationMapComponent } from '../components/location-map/location-map.component';
-import { ITEM_CATEGORIES, type ItemType } from '../models/item.model';
+import { ITEM_CATEGORIES, formatContact, isValidPhone, type ContactMethod, type ItemType } from '../models/item.model';
 import { HapticsService } from '../services/haptics.service';
 import { ItemService } from '../services/item.service';
 
@@ -53,6 +57,9 @@ import { ItemService } from '../services/item.service';
     IonHeader,
     IonIcon,
     IonInput,
+    IonLabel,
+    IonSegment,
+    IonSegmentButton,
     IonSelect,
     IonSelectOption,
     IonSpinner,
@@ -77,6 +84,7 @@ export class ReportPage {
   title = '';
   category = '';
   description = '';
+  contactMethod: ContactMethod = 'phone';
   contactInfo = '';
 
   // Photo: a preview URL for <img>, and the file itself for the upload.
@@ -104,6 +112,7 @@ export class ReportPage {
       helpCircleOutline,
       locateOutline,
       locationOutline,
+      logoFacebook,
       mapOutline,
       sendOutline,
     });
@@ -202,6 +211,10 @@ export class ReportPage {
       await this.showToast(`Please add: ${missing.join(', ')}.`, 'warning');
       return;
     }
+    if (this.contactMethod === 'phone' && !isValidPhone(this.contactInfo)) {
+      await this.showToast('Enter a valid mobile number, e.g. 0917 123 4567.', 'warning');
+      return;
+    }
 
     const loading = await this.loadingCtrl.create({ message: 'Submitting report...' });
     await loading.present();
@@ -213,7 +226,7 @@ export class ReportPage {
       category: this.category,
       latitude: this.latitude()!,
       longitude: this.longitude()!,
-      contact_info: this.contactInfo.trim(),
+      contact_info: formatContact(this.contactMethod, this.contactInfo),
     };
 
     this.itemService.createItem(item, this.photoBlob).subscribe({
@@ -234,7 +247,9 @@ export class ReportPage {
     const missing: string[] = [];
     if (!this.title.trim()) missing.push('a title');
     if (!this.category) missing.push('a category');
-    if (!this.contactInfo.trim()) missing.push('your contact info');
+    if (!this.contactInfo.trim()) {
+      missing.push(this.contactMethod === 'phone' ? 'your contact number' : 'your Facebook name');
+    }
     if (this.latitude() === null) missing.push('the location');
     return missing;
   }
@@ -244,6 +259,7 @@ export class ReportPage {
     this.title = '';
     this.category = '';
     this.description = '';
+    this.contactMethod = 'phone';
     this.contactInfo = '';
     this.removePhoto();
     this.latitude.set(null);

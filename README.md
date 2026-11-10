@@ -115,9 +115,10 @@ plain-http XAMPP server on the LAN. With the default `https` scheme those calls 
   (or **Reopen report**).
 - **Feedback**: every message on the Report tab and the details screen comes with a short
   vibration that matches it: success, warning (something to fix) or error.
-- **Report**: choose Lost or Found, fill in the title, category and contact info, add a
-  photo (optional), tap **Get Current Location** (or **Pick on map**), drag the pin if
-  needed, then **Submit report**.
+- **Report**: choose Lost or Found, fill in the title and category, choose how people can
+  reach you (**Contact number** or **Facebook name**) and fill it in, add a photo
+  (optional), tap **Get Current Location** (or **Pick on map**), drag the pin if needed,
+  then **Submit report**.
 
 ## Security notes
 

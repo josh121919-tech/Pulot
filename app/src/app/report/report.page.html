@@ -71,15 +71,48 @@
           [maxlength]="2000"
         ></ion-textarea>
 
-        <ion-input
-          [(ngModel)]="contactInfo"
-          label="Contact info *"
-          labelPlacement="floating"
-          fill="outline"
-          placeholder="Phone, email or where to claim it"
-          [maxlength]="100"
-          helperText="Shown publicly so the owner or finder can reach you."
-        ></ion-input>
+        <div class="contact-field">
+          <p class="contact-label">How can people reach you? *</p>
+          <ion-segment
+            class="pill-segment"
+            [(ngModel)]="contactMethod"
+            (ionChange)="contactInfo = ''"
+            aria-label="Contact method"
+          >
+            <ion-segment-button value="phone">
+              <ion-label>Contact number</ion-label>
+            </ion-segment-button>
+            <ion-segment-button value="facebook">
+              <ion-label>Facebook name</ion-label>
+            </ion-segment-button>
+          </ion-segment>
+
+          @if (contactMethod === 'phone') {
+            <ion-input
+              [(ngModel)]="contactInfo"
+              type="tel"
+              inputmode="tel"
+              label="Contact number *"
+              labelPlacement="floating"
+              fill="outline"
+              placeholder="e.g. 0917 123 4567"
+              [maxlength]="16"
+              helperText="Shown publicly so the owner or finder can call or text you."
+            ></ion-input>
+          } @else {
+            <ion-input
+              [(ngModel)]="contactInfo"
+              label="Facebook name *"
+              labelPlacement="floating"
+              fill="outline"
+              placeholder="e.g. Juan Dela Cruz"
+              [maxlength]="90"
+              helperText="Shown publicly so the owner or finder can message you on Facebook."
+            >
+              <ion-icon slot="start" name="logo-facebook" aria-hidden="true"></ion-icon>
+            </ion-input>
+          }
+        </div>
       </div>
     </section>
 

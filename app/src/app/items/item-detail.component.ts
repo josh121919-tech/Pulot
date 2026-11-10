@@ -24,6 +24,7 @@ import {
   cubeOutline,
   keyOutline,
   locationOutline,
+  logoFacebook,
   personCircleOutline,
   phonePortraitOutline,
   refreshOutline,
@@ -32,7 +33,7 @@ import {
 } from 'ionicons/icons';
 
 import { LocationMapComponent } from '../components/location-map/location-map.component';
-import { CATEGORY_ICONS, type Item, type ItemStatus } from '../models/item.model';
+import { CATEGORY_ICONS, parseContact, type Item, type ItemStatus } from '../models/item.model';
 import { HapticsService } from '../services/haptics.service';
 import { ItemService } from '../services/item.service';
 
@@ -70,6 +71,8 @@ export class ItemDetailComponent {
   current = linkedSignal(() => this.item());
   isMine = computed(() => this.itemService.isMine(this.current().id));
   categoryIcon = computed(() => CATEGORY_ICONS[this.current().category] ?? 'cube-outline');
+  contact = computed(() => parseContact(this.current().contact_info));
+  phoneDigits = computed(() => this.contact().value.replace(/[^\d+]/g, ''));
   saving = signal(false);
   private statusChanged = false;
 
@@ -84,6 +87,7 @@ export class ItemDetailComponent {
       cubeOutline,
       keyOutline,
       locationOutline,
+      logoFacebook,
       personCircleOutline,
       phonePortraitOutline,
       refreshOutline,

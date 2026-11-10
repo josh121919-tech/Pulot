@@ -107,6 +107,18 @@
   gap: 16px;
 }
 
+.contact-field {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.contact-label {
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
 // ---------- Photo ----------
 
 .photo-drop {
