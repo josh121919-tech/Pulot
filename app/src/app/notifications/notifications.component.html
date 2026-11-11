@@ -14,11 +14,22 @@
 
 <ion-content class="app-page">
   <div class="notice-list">
-    @for (notice of foundNotices.notices(); track notice.id) {
+    @for (notice of foundNotices.notices(); track notice.key) {
       <button class="notice surface ion-activatable" [class.notice--unread]="!notice.read" (click)="open(notice)">
-        <span class="notice-icon"><ion-icon name="hand-right-outline" aria-hidden="true"></ion-icon></span>
+        <span class="notice-icon">
+          <ion-icon
+            [name]="notice.kind === 'claim' ? 'finger-print-outline' : 'hand-right-outline'"
+            aria-hidden="true"
+          ></ion-icon>
+        </span>
         <span class="notice-body">
-          <strong class="notice-title">Someone found your item: {{ notice.title }}</strong>
+          <strong class="notice-title">
+            {{ notice.kind === 'claim' ? 'Someone says this is theirs' : 'Someone found your item' }}:
+            {{ notice.title }}
+          </strong>
+          @if (notice.proof) {
+            <span class="notice-proof">"{{ notice.proof }}"</span>
+          }
           <span class="notice-contact">{{ howToReach(notice) }}</span>
           <span class="notice-when">{{ notice.found_at | relativeDate }}</span>
         </span>
@@ -31,7 +42,10 @@
       <div class="state-message">
         <div class="state-icon"><ion-icon name="notifications-off-outline" aria-hidden="true"></ion-icon></div>
         <h2>No notifications yet</h2>
-        <p>When someone taps "I found this" on one of your Lost reports, it shows up here.</p>
+        <p>
+          When someone taps "I found this" on one of your Lost reports, or "This is mine" on one of your Found reports,
+          it shows up here.
+        </p>
       </div>
     }
   </div>

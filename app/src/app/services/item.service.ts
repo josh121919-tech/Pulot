@@ -3,17 +3,21 @@ import { Injectable, inject } from '@angular/core';
 import { tap, type Observable } from 'rxjs';
 
 import { environment } from '../../environments/environment';
-import type { ApiResponse, Item, ItemFilters, ItemStatus, NewItem } from '../models/item.model';
+import type { ApiResponse, Claim, Item, ItemFilters, ItemStatus, NewItem } from '../models/item.model';
 
 // Where this phone keeps the owner tokens of the reports it submitted ({ "12": "token" }).
 // One list per server: report ids restart at 1 on every database, so a token saved while the
 // app used the PC's XAMPP server must not count for report 1 on the online server.
 const OWNER_TOKENS_KEY = `lostfound.ownerTokens@${environment.apiUrl}`;
+// The Found reports this phone has claimed ("This is mine"), so it does not offer to claim twice.
+const MY_CLAIMS_KEY = `lostfound.myClaims@${environment.apiUrl}`;
 
 @Injectable({ providedIn: 'root' })
 export class ItemService {
   private http = inject(HttpClient);
   private url = environment.apiUrl;
+  // claims.php sits next to items.php on the same server.
+  private claimsUrl = environment.apiUrl.replace(/items\.php$/, 'claims.php');
 
   // GET /api/items.php with only the filters that are set, e.g. ?type=lost&category=Keys&q=red.
   getItems(filters: ItemFilters = {}): Observable<ApiResponse<Item[]>> {
@@ -68,6 +72,27 @@ export class ItemService {
   // owner how to reach them. No token: anyone who has the item can say so.
   reportFound(id: number, foundContact: string): Observable<ApiResponse<Item>> {
     return this.http.put<ApiResponse<Item>>(this.url, { found_contact: foundContact }, { params: { id } });
+  }
+
+  // POST /api/claims.php?item_id=N: "This is mine" on someone else's open Found report.
+  claimItem(id: number, contact: string, proof: string): Observable<ApiResponse<null>> {
+    return this.http
+      .post<ApiResponse<null>>(this.claimsUrl, { contact, proof }, { params: { item_id: id } })
+      .pipe(tap(() => this.saveMyClaim(id)));
+  }
+
+  // GET /api/claims.php?item_id=N: the claims on a report this phone posted. The owner token
+  // goes in a header, so the private proofs are only sent to the poster.
+  getClaims(id: number): Observable<ApiResponse<Claim[]>> {
+    return this.http.get<ApiResponse<Claim[]>>(this.claimsUrl, {
+      params: { item_id: id },
+      headers: { 'X-Owner-Token': this.readOwnerTokens()[id] ?? '' },
+    });
+  }
+
+  // True when this phone has already claimed the report.
+  hasClaimed(id: number): boolean {
+    return this.readMyClaims().includes(id);
   }
 
   // True when this phone has submitted at least one report to this server.
@@ -129,6 +154,23 @@ export class ItemService {
       localStorage.setItem(OWNER_TOKENS_KEY, JSON.stringify({ ...this.readOwnerTokens(), [id]: token }));
     } catch {
       // Storage full or blocked: the report is still saved, it just can't be resolved from here.
+    }
+  }
+
+  private readMyClaims(): number[] {
+    try {
+      const stored = JSON.parse(localStorage.getItem(MY_CLAIMS_KEY) ?? '[]') as unknown;
+      return Array.isArray(stored) ? stored.filter((id): id is number => typeof id === 'number') : [];
+    } catch {
+      return [];
+    }
+  }
+
+  private saveMyClaim(id: number): void {
+    try {
+      localStorage.setItem(MY_CLAIMS_KEY, JSON.stringify([...new Set([...this.readMyClaims(), id])]));
+    } catch {
+      // Storage blocked: the server still refuses a second claim from the same contact.
     }
   }
 

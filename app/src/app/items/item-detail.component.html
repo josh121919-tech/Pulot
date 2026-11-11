@@ -123,6 +123,60 @@
       </div>
     }
 
+    @if (canClaim()) {
+      <div class="owner-card surface">
+        <p class="owner-note">
+          <ion-icon name="finger-print-outline" aria-hidden="true"></ion-icon>
+          Lost this? Tell the person who found it.
+        </p>
+        <ion-button expand="block" shape="round" color="success" [disabled]="saving()" (click)="claim()">
+          @if (saving()) {
+            <ion-spinner slot="start" name="crescent"></ion-spinner>
+          } @else {
+            <ion-icon slot="start" name="finger-print-outline"></ion-icon>
+          }
+          This is mine
+        </ion-button>
+      </div>
+    } @else if (claimedHere() && current().type === 'found' && !isMine()) {
+      <div class="owner-card surface">
+        <p class="owner-note">
+          <ion-icon name="finger-print-outline" aria-hidden="true"></ion-icon>
+          You claimed this. The person who found it can contact you.
+        </p>
+      </div>
+    }
+
+    <!-- Claims on the poster's own Found report, with each claimer's proof -->
+    @if (isMine() && current().type === 'found') {
+      <div class="claims-card surface">
+        <h2 class="claims-title">Claims ({{ claims()?.length ?? current().claim_count }})</h2>
+        @if (claimsError()) {
+          <p class="claims-empty">{{ claimsError() }}</p>
+          <ion-button size="small" fill="outline" shape="round" (click)="loadClaims()">Try again</ion-button>
+        } @else if (claims() === null) {
+          <ion-spinner name="crescent"></ion-spinner>
+        } @else {
+          @for (claim of claims(); track claim.id) {
+            @let contact = claimContact(claim);
+            <div class="claim">
+              <p class="claim-proof">"{{ claim.proof }}"</p>
+              <p class="claim-meta">
+                @if (contact.method === 'phone') {
+                  <a class="info-link" [href]="'tel:' + contact.digits">Call or text {{ contact.value }}</a>
+                } @else {
+                  <span>Facebook: {{ contact.value }}</span>
+                }
+                · {{ claim.created_at | date: 'MMM d, h:mm a' }}
+              </p>
+            </div>
+          } @empty {
+            <p class="claims-empty">No one has claimed it yet. You get an alert when someone does.</p>
+          }
+        }
+      </div>
+    }
+
     <!-- Only the phone that submitted the report holds its owner token -->
     @if (isMine()) {
       <div class="owner-card surface">

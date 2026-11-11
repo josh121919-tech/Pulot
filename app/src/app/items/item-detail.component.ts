@@ -1,5 +1,5 @@
 import { DatePipe, DecimalPipe } from '@angular/common';
-import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
+import { Component, computed, inject, input, linkedSignal, signal, type OnInit } from '@angular/core';
 import {
   AlertController,
   IonButton,
@@ -23,6 +23,7 @@ import {
   closeOutline,
   createOutline,
   cubeOutline,
+  fingerPrintOutline,
   handRightOutline,
   keyOutline,
   locationOutline,
@@ -41,6 +42,7 @@ import {
   formatContact,
   isValidPhone,
   parseContact,
+  type Claim,
   type Item,
   type ItemStatus,
 } from '../models/item.model';
@@ -52,9 +54,14 @@ interface FoundForm {
   facebook: string;
 }
 
+interface ClaimForm extends FoundForm {
+  proof: string;
+}
+
 // Full-screen modal opened from the Browse list: photo, details and the map pin.
 // On the phone that submitted the report it also lets the reporter mark it resolved,
-// edit it or delete it.
+// edit it, delete it and read the claims on it. Others can say "I found this" on a Lost report
+// or "This is mine" on a Found one.
 @Component({
   selector: 'app-item-detail',
   templateUrl: 'item-detail.component.html',
@@ -73,7 +80,7 @@ interface FoundForm {
     LocationMapComponent,
   ],
 })
-export class ItemDetailComponent {
+export class ItemDetailComponent implements OnInit {
   private modalCtrl = inject(ModalController);
   private alertCtrl = inject(AlertController);
   private toastCtrl = inject(ToastController);
@@ -100,6 +107,15 @@ export class ItemDetailComponent {
     const item = this.current();
     return item.type === 'lost' && item.status === 'open' && !item.found_at && !this.isMine();
   });
+  // Anyone except the poster can claim an open Found report, once per phone.
+  claimedHere = signal(false);
+  canClaim = computed(() => {
+    const item = this.current();
+    return item.type === 'found' && item.status === 'open' && !this.isMine() && !this.claimedHere();
+  });
+  // The claims on the poster's own Found report: null until loaded.
+  claims = signal<Claim[] | null>(null);
+  claimsError = signal('');
   saving = signal(false);
   private statusChanged = false;
 
@@ -113,6 +129,7 @@ export class ItemDetailComponent {
       closeOutline,
       createOutline,
       cubeOutline,
+      fingerPrintOutline,
       handRightOutline,
       keyOutline,
       locationOutline,
@@ -124,6 +141,26 @@ export class ItemDetailComponent {
       timeOutline,
       trashOutline,
     });
+  }
+
+  ngOnInit(): void {
+    this.claimedHere.set(this.itemService.hasClaimed(this.current().id));
+    if (this.isMine() && this.current().type === 'found') {
+      this.loadClaims();
+    }
+  }
+
+  loadClaims(): void {
+    this.claimsError.set('');
+    this.itemService.getClaims(this.current().id).subscribe({
+      next: (result) => this.claims.set(result.data ?? []),
+      error: (err) => this.claimsError.set(this.itemService.describeError(err)),
+    });
+  }
+
+  claimContact(claim: Claim): { method: string | null; value: string; digits: string } {
+    const contact = parseContact(claim.contact);
+    return { ...contact, digits: contact.value.replace(/[^\d+]/g, '') };
   }
 
   // Tells the Browse list to reload if the status changed while this was open.
@@ -204,6 +241,71 @@ export class ItemDetailComponent {
         await this.showToast(this.itemService.describeError(err), 'danger');
       },
     });
+  }
+
+  // "This is mine": the owner of a Found item leaves a contact and a detail only they would
+  // know, so the person who found it can check before giving it back.
+  async claim(): Promise<void> {
+    const alert = await this.alertCtrl.create({
+      header: 'Is this yours?',
+      message:
+        'Leave your contact number or Facebook name, and a detail only the owner would know. Only the person who found it sees the detail.',
+      inputs: [
+        {
+          name: 'phone',
+          type: 'tel',
+          placeholder: 'Contact number, e.g. 0917 123 4567',
+          attributes: { maxlength: 16, inputmode: 'tel' },
+        },
+        { name: 'facebook', type: 'text', placeholder: 'or your Facebook name', attributes: { maxlength: 90 } },
+        {
+          name: 'proof',
+          type: 'textarea',
+          placeholder: 'Proof, e.g. what is inside, a mark or sticker',
+          attributes: { maxlength: 500 },
+        },
+      ],
+      buttons: [
+        { text: 'Cancel', role: 'cancel' },
+        {
+          text: 'Send claim',
+          role: 'confirm',
+          handler: (values: ClaimForm) => {
+            const problem = this.foundFormProblem(values) ?? this.proofProblem(values.proof);
+            if (problem) {
+              void this.showToast(problem, 'warning');
+              return false; // keep the alert open so the owner can fix it
+            }
+            return true;
+          },
+        },
+      ],
+    });
+    await alert.present();
+    const { role, data } = await alert.onDidDismiss<{ values: ClaimForm }>();
+    if (role !== 'confirm' || !data) {
+      return;
+    }
+
+    const phone = data.values.phone.trim();
+    const contact = phone ? formatContact('phone', phone) : formatContact('facebook', data.values.facebook);
+    this.saving.set(true);
+    this.itemService.claimItem(this.current().id, contact, data.values.proof.trim()).subscribe({
+      next: async (result) => {
+        this.saving.set(false);
+        this.claimedHere.set(true);
+        this.statusChanged = true;
+        await this.showToast(result.message ?? 'Claim sent.', 'success');
+      },
+      error: async (err) => {
+        this.saving.set(false);
+        await this.showToast(this.itemService.describeError(err), 'danger');
+      },
+    });
+  }
+
+  private proofProblem(proof: string): string | null {
+    return proof.trim().length >= 5 ? null : 'Add a detail only the owner would know (at least 5 characters).';
   }
 
   private foundFormProblem(values: FoundForm): string | null {

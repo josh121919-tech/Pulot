@@ -11,14 +11,14 @@ import {
   ModalController,
 } from '@ionic/angular';
 import { addIcons } from 'ionicons';
-import { closeOutline, handRightOutline, notificationsOffOutline } from 'ionicons/icons';
+import { closeOutline, fingerPrintOutline, handRightOutline, notificationsOffOutline } from 'ionicons/icons';
 
 import { parseContact } from '../models/item.model';
 import { FoundNoticeService, type FoundNotice } from '../services/found-notice.service';
 import { RelativeDatePipe } from '../shared/relative-date.pipe';
 
-// The bell list: every "someone found your item" notice this phone has received, newest
-// first. Unread ones are marked; tapping one opens its report.
+// The bell list: every "someone found your item" and "someone says this is theirs" notice
+// this phone has received, newest first. Unread ones are marked; tapping one opens its report.
 @Component({
   selector: 'app-notifications',
   templateUrl: 'notifications.component.html',
@@ -40,7 +40,7 @@ export class NotificationsComponent {
   readonly foundNotices = inject(FoundNoticeService);
 
   constructor() {
-    addIcons({ closeOutline, handRightOutline, notificationsOffOutline });
+    addIcons({ closeOutline, fingerPrintOutline, handRightOutline, notificationsOffOutline });
   }
 
   howToReach(notice: FoundNotice): string {

@@ -166,6 +166,43 @@
   padding: 6px;
 }
 
+// Claims on the poster's own Found report.
+.claims-card {
+  padding: 14px 16px;
+}
+
+.claims-title {
+  margin: 0 0 8px;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.claim {
+  padding: 10px 0;
+  border-top: 1px solid var(--app-border);
+
+  p {
+    margin: 0;
+  }
+}
+
+.claim-proof {
+  font-style: italic;
+  line-height: 1.4;
+}
+
+.claim-meta {
+  margin-top: 4px !important;
+  font-size: 0.85rem;
+  color: var(--app-muted);
+}
+
+.claims-empty {
+  margin: 0 0 8px;
+  font-size: 0.9rem;
+  color: var(--app-muted);
+}
+
 .owner-card {
   padding: 14px 16px 10px;
 }

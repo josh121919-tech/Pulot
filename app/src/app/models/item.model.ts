@@ -57,8 +57,18 @@ export interface Item {
   resolved_at: string | null; // ISO 8601, UTC; set when the reporter marks it resolved
   found_contact: string | null; // "Phone: …" or "Facebook: …", left by someone who found a Lost item
   found_at: string | null; // ISO 8601, UTC; when that finder left the notice
+  claim_count: number; // how many people said "This is mine" on a Found report
   created_at: string; // ISO 8601, UTC
   owner_token?: string; // only in the POST reply: the secret that lets this phone change the status
+}
+
+// One "This is mine" claim on a Found report. Only the person who posted the report can read them.
+export interface Claim {
+  id: number;
+  item_id: number;
+  contact: string; // "Phone: …" or "Facebook: …"
+  proof: string; // something only the owner would know
+  created_at: string; // ISO 8601, UTC
 }
 
 // Optional GET filters; every one left out means "any".

@@ -11,12 +11,18 @@ import { parseContact, type Item } from '../models/item.model';
 import { HapticsService } from './haptics.service';
 import { ItemService } from './item.service';
 
-// One "someone found your item" notice, kept on this phone for the bell list.
+// One notice about a report this phone posted, kept for the bell list:
+//   'found' - someone tapped "I found this" on the user's Lost report (one per report);
+//   'claim' - someone tapped "This is mine" on the user's Found report (one per claim).
 export interface FoundNotice {
+  key: string; // 'found-<report id>' or 'claim-<claim id>'
+  kind: 'found' | 'claim';
   id: number; // the report id
+  claim_id?: number;
   title: string;
-  found_contact: string;
-  found_at: string;
+  found_contact: string; // how to reach the finder or the claimer
+  proof?: string; // claims only: the detail the claimer says only the owner knows
+  found_at: string; // when the notice was left
   read: boolean;
   item: Item; // the report as it was when the notice arrived, shown if the server is offline
 }
@@ -26,9 +32,12 @@ const NOTICES_KEY = `lostfound.foundNotices@${environment.apiUrl}`;
 // Ids announced by the first version of this feature, before the bell list existed.
 const OLD_SEEN_KEY = `lostfound.seenFoundNotices@${environment.apiUrl}`;
 const CHECK_EVERY_MS = 30_000;
+// Phone notification ids: a found notice uses the report id, a claim this plus the claim id.
+const CLAIM_NOTIFICATION_BASE = 1_000_000;
 
-// Tells the owner of a Lost report when someone says they found it. It checks when the app
-// opens, when it comes back to the front, and every 30 seconds while it is open. A new notice
+// Tells the user about news on the reports they posted: someone found their Lost item, or
+// someone claims their Found item. It checks when the app opens, when it comes back to the
+// front, and every 30 seconds while it is open. Each new notice
 //   - rings the phone's vibration for up to a minute, until the alert is answered,
 //   - posts a notification in the phone's notification bar (tap it to open the report),
 //   - is added to the bell list on the Browse tab, with an unread count.
@@ -100,6 +109,7 @@ export class FoundNoticeService {
     this.saveNotices(this.notices().map((notice) => ({ ...notice, read: true })));
   }
 
+  // Opening a report marks every notice about it as read.
   private markRead(id: number): void {
     this.saveNotices(this.notices().map((notice) => (notice.id === id ? { ...notice, read: true } : notice)));
   }
@@ -110,27 +120,13 @@ export class FoundNoticeService {
     }
     this.checking = true;
     try {
-      const result = await firstValueFrom(this.itemService.getItems({ type: 'lost', status: 'open' }));
-      const known = new Set(this.notices().map((notice) => notice.id));
-      const oldSeen = this.readOldSeen();
-      const news = (result.data ?? []).filter(
-        (item) => item.found_at && this.itemService.isMine(item.id) && !known.has(item.id),
-      );
-      for (const item of news) {
-        const alreadyAnnounced = oldSeen.includes(item.id);
-        this.saveNotices([
-          {
-            id: item.id,
-            title: item.title,
-            found_contact: item.found_contact ?? '',
-            found_at: item.found_at ?? '',
-            read: alreadyAnnounced,
-            item,
-          },
-          ...this.notices(),
-        ]);
-        if (!alreadyAnnounced) {
-          await this.announce(item);
+      const result = await firstValueFrom(this.itemService.getItems({ status: 'open' }));
+      const mine = (result.data ?? []).filter((item) => this.itemService.isMine(item.id));
+      for (const item of mine) {
+        if (item.type === 'lost') {
+          await this.checkFound(item);
+        } else {
+          await this.checkClaims(item);
         }
       }
     } catch {
@@ -140,20 +136,80 @@ export class FoundNoticeService {
     }
   }
 
-  private async announce(item: Item): Promise<void> {
-    const contact = parseContact(item.found_contact ?? '');
+  // "I found this" on the user's Lost report.
+  private async checkFound(item: Item): Promise<void> {
+    const key = `found-${item.id}`;
+    if (!item.found_at || this.hasNotice(key)) {
+      return;
+    }
+    const alreadyAnnounced = this.readOldSeen().includes(item.id);
+    const notice: FoundNotice = {
+      key,
+      kind: 'found',
+      id: item.id,
+      title: item.title,
+      found_contact: item.found_contact ?? '',
+      found_at: item.found_at,
+      read: alreadyAnnounced,
+      item,
+    };
+    this.saveNotices([notice, ...this.notices()]);
+    if (!alreadyAnnounced) {
+      await this.announce(notice);
+    }
+  }
+
+  // "This is mine" on the user's Found report. The list only gives a count, so the claims
+  // themselves are fetched only when the count is higher than the claims already known.
+  private async checkClaims(item: Item): Promise<void> {
+    const known = this.notices().filter((notice) => notice.kind === 'claim' && notice.id === item.id).length;
+    if (item.claim_count <= known) {
+      return;
+    }
+    const result = await firstValueFrom(this.itemService.getClaims(item.id));
+    // The API lists newest first; announce them in the order they came.
+    for (const claim of [...(result.data ?? [])].reverse()) {
+      const key = `claim-${claim.id}`;
+      if (this.hasNotice(key)) {
+        continue;
+      }
+      const notice: FoundNotice = {
+        key,
+        kind: 'claim',
+        id: item.id,
+        claim_id: claim.id,
+        title: item.title,
+        found_contact: claim.contact,
+        proof: claim.proof,
+        found_at: claim.created_at,
+        read: false,
+        item,
+      };
+      this.saveNotices([notice, ...this.notices()]);
+      await this.announce(notice);
+    }
+  }
+
+  private hasNotice(key: string): boolean {
+    return this.notices().some((notice) => notice.key === key);
+  }
+
+  private async announce(notice: FoundNotice): Promise<void> {
+    const contact = parseContact(notice.found_contact);
     const howToReach =
       contact.method === 'facebook'
         ? `Message them on Facebook: ${contact.value}`
         : `Call or text them: ${contact.value}`;
+    const isClaim = notice.kind === 'claim';
+    const message = isClaim ? `Their proof: "${notice.proof}". ${howToReach}` : howToReach;
 
-    void this.postPhoneNotification(item, howToReach);
+    void this.postPhoneNotification(notice, message);
     const stopRinging = this.haptics.ring();
 
     const alert = await this.alertCtrl.create({
-      header: 'Someone found your item!',
-      subHeader: item.title,
-      message: howToReach,
+      header: isClaim ? 'Someone says this is theirs!' : 'Someone found your item!',
+      subHeader: notice.title,
+      message,
       backdropDismiss: false,
       buttons: [
         { text: 'Later', role: 'cancel' },
@@ -163,9 +219,9 @@ export class FoundNoticeService {
     await alert.present();
     const { role } = await alert.onDidDismiss();
     stopRinging();
-    void this.clearPhoneNotification(item.id);
+    void this.clearPhoneNotification(notice);
     if (role === 'confirm') {
-      await this.openReport(item.id);
+      await this.openReport(notice.id);
     }
   }
 
@@ -192,7 +248,11 @@ export class FoundNoticeService {
     }
   }
 
-  private async postPhoneNotification(item: Item, body: string): Promise<void> {
+  private notificationId(notice: FoundNotice): number {
+    return notice.kind === 'claim' ? CLAIM_NOTIFICATION_BASE + (notice.claim_id ?? 0) : notice.id;
+  }
+
+  private async postPhoneNotification(notice: FoundNotice, body: string): Promise<void> {
     if (!Capacitor.isNativePlatform()) {
       return;
     }
@@ -200,11 +260,14 @@ export class FoundNoticeService {
       await LocalNotifications.schedule({
         notifications: [
           {
-            id: item.id,
-            title: `Someone found your item: ${item.title}`,
+            id: this.notificationId(notice),
+            title:
+              notice.kind === 'claim'
+                ? `Someone says this is theirs: ${notice.title}`
+                : `Someone found your item: ${notice.title}`,
             body,
             smallIcon: 'ic_stat_pickapp',
-            extra: { itemId: item.id },
+            extra: { itemId: notice.id },
           },
         ],
       });
@@ -213,14 +276,14 @@ export class FoundNoticeService {
     }
   }
 
-  // Removes the notification from the bar once the owner has answered the alert in the app.
-  private async clearPhoneNotification(id: number): Promise<void> {
+  // Removes the notification from the bar once the user has answered the alert in the app.
+  private async clearPhoneNotification(notice: FoundNotice): Promise<void> {
     if (!Capacitor.isNativePlatform()) {
       return;
     }
     try {
       await LocalNotifications.removeDeliveredNotifications({
-        notifications: [{ id, title: '', body: '' }],
+        notifications: [{ id: this.notificationId(notice), title: '', body: '' }],
       });
     } catch {
       // Nothing to remove.
@@ -232,7 +295,15 @@ export class FoundNoticeService {
   private readNotices(): FoundNotice[] {
     try {
       const stored = JSON.parse(localStorage.getItem(NOTICES_KEY) ?? '[]') as unknown;
-      return Array.isArray(stored) ? (stored as FoundNotice[]) : [];
+      if (!Array.isArray(stored)) {
+        return [];
+      }
+      // Notices saved before claims existed have no key or kind: they are all 'found'.
+      return (stored as FoundNotice[]).map((notice) => ({
+        ...notice,
+        kind: notice.kind ?? 'found',
+        key: notice.key ?? `found-${notice.id}`,
+      }));
     } catch {
       return [];
     }
