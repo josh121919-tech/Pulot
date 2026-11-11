@@ -54,8 +54,6 @@ import {
 import { HapticsService } from '../services/haptics.service';
 import { ItemService } from '../services/item.service';
 
-// Report tab: form + Camera + Geolocation/Leaflet, sent with POST /api/items.php.
-// The same form opens in a modal, filled in, when the reporter taps Edit on their report.
 @Component({
   selector: 'app-report',
   templateUrl: 'report.page.html',
@@ -92,12 +90,9 @@ export class ReportPage implements OnInit {
 
   readonly categories = ITEM_CATEGORIES;
 
-  // Set through ModalController componentProps when editing an existing report.
   editItem = input<Item | null>(null);
-  // The photo already on the server, shown until it is replaced or removed.
   private keptPhotoUrl: string | null = null;
 
-  // Form fields, bound with [(ngModel)].
   type: ItemType = 'lost';
   title = '';
   category = '';
@@ -105,17 +100,14 @@ export class ReportPage implements OnInit {
   contactMethod: ContactMethod = 'phone';
   contactInfo = '';
 
-  // Photo: a preview URL for <img>, and the file itself for the upload.
   photoPreview = signal<string | null>(null);
   private photoBlob: Blob | null = null;
 
-  // Location: null until GPS or the user sets it.
   latitude = signal<number | null>(null);
   longitude = signal<number | null>(null);
   accuracy = signal<number | null>(null);
   locating = signal(false);
 
-  // e.g. "15.48650, 120.97340 (±12 m)"; the accuracy part only appears for a GPS fix.
   locationSummary = computed(() => {
     const coords = `${this.latitude()?.toFixed(5)}, ${this.longitude()?.toFixed(5)}`;
     const accuracy = this.accuracy();
@@ -136,7 +128,6 @@ export class ReportPage implements OnInit {
     });
   }
 
-  // Fills the form from the report being edited.
   ngOnInit(): void {
     const item = this.editItem();
     if (!item) {
@@ -159,10 +150,6 @@ export class ReportPage implements OnInit {
     this.modalCtrl.dismiss(null);
   }
 
-  // ---------- Camera ----------
-
-  // Asks "Take photo" or "Choose from gallery" (Camera 8 replaced CameraSource.Prompt
-  // with these two separate calls), then keeps the result for preview and upload.
   async choosePhoto(): Promise<void> {
     const sheet = await this.actionSheetCtrl.create({
       header: 'Add a photo of the item',
@@ -187,12 +174,10 @@ export class ReportPage implements OnInit {
       if (!photo?.webPath) {
         return;
       }
-      // webPath is a URL the WebView can read, so fetch() turns it into a Blob for FormData.
       const response = await fetch(photo.webPath);
       this.photoBlob = await response.blob();
       this.photoPreview.set(photo.webPath);
     } catch (err) {
-      // Closing the camera without taking a picture also lands here; that is not an error.
       const message = String((err as Error)?.message ?? err).toLowerCase();
       if (!message.includes('cancel') && !message.includes('no picture') && !message.includes('no image')) {
         await this.showToast('Could not get the photo. Check the camera permission and try again.', 'danger');
@@ -205,12 +190,9 @@ export class ReportPage implements OnInit {
     this.photoPreview.set(null);
   }
 
-  // ---------- Geolocation ----------
-
   async getCurrentLocation(): Promise<void> {
     this.locating.set(true);
     try {
-      // On a phone, ask for location permission first (the browser asks by itself).
       if (Capacitor.isNativePlatform()) {
         const permission = await Geolocation.requestPermissions();
         if (permission.location !== 'granted') {
@@ -230,21 +212,17 @@ export class ReportPage implements OnInit {
     }
   }
 
-  // Fallback when GPS is unavailable: drop the pin at the default spot for the user to move.
   pickOnMap(): void {
     this.latitude.set(environment.defaultMapCenter.latitude);
     this.longitude.set(environment.defaultMapCenter.longitude);
     this.accuracy.set(null);
   }
 
-  // Called by the map when the pin is dragged or the map is tapped.
   onPinMoved(position: LatLng): void {
     this.latitude.set(position.latitude);
     this.longitude.set(position.longitude);
-    this.accuracy.set(null); // now set by hand, so GPS accuracy no longer applies
+    this.accuracy.set(null);
   }
-
-  // ---------- Submit ----------
 
   async submit(): Promise<void> {
     const missing = this.missingFields();
@@ -274,7 +252,6 @@ export class ReportPage implements OnInit {
 
     const editing = this.editItem();
     if (editing) {
-      // The old photo is removed only if the user took it off and did not pick a new one.
       const removePhoto = this.keptPhotoUrl !== null && this.photoPreview() === null;
       this.itemService.updateItem(editing.id, item, this.photoBlob, removePhoto).subscribe({
         next: async (result) => {
@@ -328,7 +305,6 @@ export class ReportPage implements OnInit {
     this.accuracy.set(null);
   }
 
-  // Every message on this page also gets the matching vibration (Haptics notification type).
   private async showToast(message: string, color: 'success' | 'warning' | 'danger'): Promise<void> {
     void (color === 'success'
       ? this.haptics.success()

@@ -9,13 +9,10 @@ export interface LatLng {
   longitude: number;
 }
 
-// A Leaflet map with one pin. Used read-only in the item details, and with
-// `draggable` on the Report page so the user can correct the GPS position.
 @Component({
   selector: 'app-location-map',
   template: '<div #map class="location-map" role="application" aria-label="Map showing the item location"></div>',
   styleUrls: ['location-map.component.scss'],
-  // Leaflet creates the pin and tiles outside Angular's view, so the styles must be global.
   encapsulation: ViewEncapsulation.None,
 })
 export class LocationMapComponent implements AfterViewInit, OnDestroy {
@@ -31,7 +28,6 @@ export class LocationMapComponent implements AfterViewInit, OnDestroy {
   private resizeObserver?: ResizeObserver;
 
   constructor() {
-    // When the parent passes new coordinates (e.g. a new GPS fix), move the pin there.
     effect(() => {
       const position: L.LatLngTuple = [this.latitude(), this.longitude()];
       if (this.map && this.marker) {
@@ -40,7 +36,6 @@ export class LocationMapComponent implements AfterViewInit, OnDestroy {
       }
     });
 
-    // Recolour the pin if the Report form switches between Lost and Found.
     effect(() => {
       this.marker?.setIcon(this.pinIcon(this.type()));
     });
@@ -51,7 +46,6 @@ export class LocationMapComponent implements AfterViewInit, OnDestroy {
 
     this.map = L.map(this.mapElement().nativeElement).setView(position, 17);
 
-    // OpenStreetMap tiles (free; the attribution line is required by their licence).
     L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19,
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
@@ -60,7 +54,6 @@ export class LocationMapComponent implements AfterViewInit, OnDestroy {
     this.marker = L.marker(position, { icon: this.pinIcon(this.type()), draggable: this.draggable() }).addTo(this.map);
 
     if (this.draggable()) {
-      // Drag the pin, or tap anywhere on the map, to set the location by hand.
       this.marker.on('dragend', () => this.emitPosition(this.marker!.getLatLng()));
       this.map.on('click', (event: L.LeafletMouseEvent) => {
         this.marker!.setLatLng(event.latlng);
@@ -68,8 +61,6 @@ export class LocationMapComponent implements AfterViewInit, OnDestroy {
       });
     }
 
-    // Ionic pages and modals animate in, so the map's size is not final at this point.
-    // Re-measure whenever the container changes size, otherwise tiles render grey.
     this.resizeObserver = new ResizeObserver(() => this.map?.invalidateSize());
     this.resizeObserver.observe(this.mapElement().nativeElement);
   }
@@ -79,14 +70,12 @@ export class LocationMapComponent implements AfterViewInit, OnDestroy {
     this.map?.remove();
   }
 
-  // Custom pin drawn with CSS, red for lost and green for found. Avoids Leaflet's
-  // default marker images, whose file paths break when Angular bundles the app.
   private pinIcon(type: ItemType): L.DivIcon {
     return L.divIcon({
       className: '',
       html: `<div class="map-pin map-pin--${type}"></div>`,
       iconSize: [30, 30],
-      iconAnchor: [15, 36], // the rotated tip sits ~21px below the pin's centre
+      iconAnchor: [15, 36],
     });
   }
 

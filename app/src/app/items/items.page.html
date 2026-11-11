@@ -45,7 +45,6 @@
     <ion-refresher-content></ion-refresher-content>
   </ion-refresher>
 
-  <!-- Filters from the sheet; tap one to remove it -->
   @if (activeFilterCount() > 0) {
     <div class="active-filters">
       @if (category()) {
@@ -65,7 +64,6 @@
 
   <div class="report-list">
     @if (loading()) {
-      <!-- Placeholder cards while the request is in flight -->
       @for (n of [1, 2, 3, 4]; track n) {
         <div class="report-card surface">
           <ion-skeleton-text [animated]="true" class="report-thumb"></ion-skeleton-text>
@@ -133,7 +131,6 @@
     }
   </div>
 
-  <!-- Filters sheet -->
   <ion-modal
     class="filter-sheet"
     [isOpen]="filtersOpen()"

@@ -68,9 +68,6 @@ const DATE_LABELS: Record<DateFilter, string> = {
   week: 'Past 7 days',
   month: 'Past 30 days',
 };
-// Browse tab (open reports) and Resolved tab (items given back): reports from
-// GET /api/items.php, with keyword search, Lost / Found, and category and date filters.
-// Every filter is applied by the server. The route's data says which status the tab shows.
 @Component({
   selector: 'app-items',
   templateUrl: 'items.page.html',
@@ -114,13 +111,11 @@ export class ItemsPage {
   errorMessage = signal('');
   filtersOpen = signal(false);
 
-  // Search and filters.
   search = signal('');
   type = signal<TypeFilter>('all');
   category = signal('');
   date = signal<DateFilter>('any');
 
-  // How many of the sheet's filters are set, shown on the Filters button.
   activeFilterCount = computed(() => [this.category() !== '', this.date() !== 'any'].filter(Boolean).length);
   isFiltered = computed(() => this.search().trim() !== '' || this.type() !== 'all' || this.activeFilterCount() > 0);
 
@@ -141,7 +136,6 @@ export class ItemsPage {
     }
   });
 
-  // Only the newest request may fill the list, so a slow older search can't overwrite it.
   private latestRequest = 0;
 
   constructor() {
@@ -164,7 +158,6 @@ export class ItemsPage {
       shirtOutline,
     });
 
-    // A report opened from the bell list or the found alert was changed: reload.
     effect(() => {
       if (this.foundNotices.reportsChanged() > 0) {
         untracked(() => this.loadItems());
@@ -172,8 +165,6 @@ export class ItemsPage {
     });
   }
 
-  // Ionic lifecycle hook: runs every time this tab is shown, so a report
-  // submitted on the Report tab appears as soon as the user comes back.
   ionViewWillEnter(): void {
     this.loadItems();
   }
@@ -204,19 +195,16 @@ export class ItemsPage {
     });
   }
 
-  // Pull-to-refresh. Also checks for new notices about the user's own reports.
   onRefresh(event: RefresherCustomEvent): void {
     this.loadItems(event);
     void this.foundNotices.checkNow();
   }
 
-  // The search bar waits 400 ms after the last key press (its debounce) before this runs.
   onSearch(event: CustomEvent<{ value?: string | null }>): void {
-    this.search.set((event.detail.value ?? '').slice(0, 100)); // the API accepts up to 100 characters
+    this.search.set((event.detail.value ?? '').slice(0, 100));
     this.loadItems();
   }
 
-  // All / Lost / Found segment.
   onTypeChange(event: SegmentCustomEvent): void {
     this.type.set(event.detail.value as TypeFilter);
     this.loadItems();
@@ -261,15 +249,12 @@ export class ItemsPage {
     });
     await modal.present();
 
-    // The detail screen returns true when the report changed (status, edit or delete).
     const { data } = await modal.onWillDismiss<boolean>();
     if (data) {
       this.loadItems();
     }
   }
 
-  // The bell: the list of "someone found your item" and claim notices. Opening it also
-  // checks for new ones.
   async openNotifications(): Promise<void> {
     void this.foundNotices.checkNow();
     const modal = await this.modalCtrl.create({ component: NotificationsComponent });
@@ -288,13 +273,12 @@ export class ItemsPage {
     };
   }
 
-  // Start of the date range in the phone's own time zone, sent as an ISO date-time.
   private dateFrom(range: DateFilter): string | undefined {
     if (range === 'any') {
       return undefined;
     }
     const start = new Date();
-    start.setHours(0, 0, 0, 0); // local midnight today
+    start.setHours(0, 0, 0, 0);
     const daysBack = { today: 0, week: 6, month: 29 }[range];
     start.setDate(start.getDate() - daysBack);
     return start.toISOString();
