@@ -2,7 +2,7 @@ import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
   appId: 'com.campuslostfound.app',
-  appName: 'PULOT',
+  appName: 'PickApp',
   webDir: 'www',
   server: {
     // Serve the app from http://localhost instead of the default https://localhost.

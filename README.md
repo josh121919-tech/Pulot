@@ -1,6 +1,6 @@
-# PULOT
+# PickApp
 
-PULOT (Filipino for "to pick up") is a small Ionic + Angular + Capacitor app for reporting items lost or found on campus.
+PickApp (from "pick up", as in picking up a lost item) is a small Ionic + Angular + Capacitor app for reporting items lost or found on campus.
 A student takes a photo of the item, pins where it was lost or found on a map, and
 submits the report. Everyone can browse the reports, filter Lost / Found, and open a
 report to see the photo, the contact person and the spot on the map.
@@ -20,13 +20,12 @@ campus-lost-found/
 ├── sql/lost_found.sql              creates the campus_lost_found database and items table
 ├── sql/migrate_add_status.sql      adds the Resolved status to an older items table
 ├── uploads/                        saved photos (.htaccess blocks scripts and listing)
-├── app/                            the Ionic project
-│   ├── src/app/services/item.service.ts
-│   ├── src/app/items/              Browse tab + item details modal
-│   ├── src/app/report/             Report tab (form, camera, GPS, map)
-│   ├── src/app/components/location-map/   reusable Leaflet map
-│   └── android/                    native Android project (Capacitor)
-└── docs/SUBMISSION_GUIDE.md        presentation notes, test table, limitations, AI disclosure
+└── app/                            the Ionic project
+    ├── src/app/services/item.service.ts
+    ├── src/app/items/              Browse tab + item details modal
+    ├── src/app/report/             Report tab (form, camera, GPS, map)
+    ├── src/app/components/location-map/   reusable Leaflet map
+    └── android/                    native Android project (Capacitor)
 ```
 
 ## 1. Backend setup (XAMPP)

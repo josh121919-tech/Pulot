@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">PULOT</string>
-    <string name="title_activity_main">PULOT</string>
+    <string name="app_name">PickApp</string>
+    <string name="title_activity_main">PickApp</string>
     <string name="package_name">com.campuslostfound.app</string>
     <string name="custom_url_scheme">com.campuslostfound.app</string>
 </resources>
