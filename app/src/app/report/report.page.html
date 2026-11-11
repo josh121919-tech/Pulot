@@ -1,6 +1,11 @@
 <ion-header class="app-header ion-no-border">
   <ion-toolbar>
-    <ion-title>Report an item</ion-title>
+    <ion-title>{{ editItem() ? 'Edit report' : 'Report an item' }}</ion-title>
+    @if (editItem()) {
+      <ion-buttons slot="end">
+        <ion-button (click)="cancelEdit()">Cancel</ion-button>
+      </ion-buttons>
+    }
   </ion-toolbar>
 </ion-header>
 
@@ -190,7 +195,7 @@
   <ion-toolbar class="submit-toolbar">
     <ion-button class="submit-button" expand="block" shape="round" (click)="submit()">
       <ion-icon slot="start" name="send-outline"></ion-icon>
-      Submit report
+      {{ editItem() ? 'Save changes' : 'Submit report' }}
     </ion-button>
   </ion-toolbar>
 </ion-footer>

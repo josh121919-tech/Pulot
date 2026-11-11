@@ -149,6 +149,16 @@
             Reopen report
           </ion-button>
         }
+        <div class="owner-actions">
+          <ion-button shape="round" fill="outline" [disabled]="saving()" (click)="edit()">
+            <ion-icon slot="start" name="create-outline"></ion-icon>
+            Edit
+          </ion-button>
+          <ion-button shape="round" fill="outline" color="danger" [disabled]="saving()" (click)="confirmDelete()">
+            <ion-icon slot="start" name="trash-outline"></ion-icon>
+            Delete
+          </ion-button>
+        </div>
       </div>
     }
   </div>

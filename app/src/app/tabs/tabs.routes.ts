@@ -10,6 +10,13 @@ export const routes: Routes = [
       {
         path: 'items',
         loadComponent: () => import('../items/items.page').then((m) => m.ItemsPage),
+        data: { status: 'open' },
+      },
+      {
+        // The same list page, showing only reports whose owner got the item back.
+        path: 'resolved',
+        loadComponent: () => import('../items/items.page').then((m) => m.ItemsPage),
+        data: { status: 'resolved' },
       },
       {
         path: 'report',

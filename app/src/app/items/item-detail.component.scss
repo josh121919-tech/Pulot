@@ -104,6 +104,18 @@
   color: var(--app-muted);
 }
 
+// Edit and Delete side by side under the status button.
+.owner-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 8px;
+
+  ion-button {
+    margin: 0;
+  }
+}
+
 .info-card {
   padding: 4px 16px;
 }

@@ -21,6 +21,7 @@ import {
   checkmarkCircle,
   checkmarkDoneOutline,
   closeOutline,
+  createOutline,
   cubeOutline,
   handRightOutline,
   keyOutline,
@@ -31,6 +32,7 @@ import {
   refreshOutline,
   shirtOutline,
   timeOutline,
+  trashOutline,
 } from 'ionicons/icons';
 
 import { LocationMapComponent } from '../components/location-map/location-map.component';
@@ -51,7 +53,8 @@ interface FoundForm {
 }
 
 // Full-screen modal opened from the Browse list: photo, details and the map pin.
-// On the phone that submitted the report it also lets the reporter mark it resolved.
+// On the phone that submitted the report it also lets the reporter mark it resolved,
+// edit it or delete it.
 @Component({
   selector: 'app-item-detail',
   templateUrl: 'item-detail.component.html',
@@ -108,6 +111,7 @@ export class ItemDetailComponent {
       checkmarkCircle,
       checkmarkDoneOutline,
       closeOutline,
+      createOutline,
       cubeOutline,
       handRightOutline,
       keyOutline,
@@ -118,6 +122,7 @@ export class ItemDetailComponent {
       refreshOutline,
       shirtOutline,
       timeOutline,
+      trashOutline,
     });
   }
 
@@ -207,6 +212,51 @@ export class ItemDetailComponent {
       return isValidPhone(phone) ? null : 'Enter a valid mobile number, e.g. 0917 123 4567.';
     }
     return values.facebook.trim() ? null : 'Add your contact number or your Facebook name.';
+  }
+
+  // Opens the Report form, filled in, in a modal. It returns the saved report.
+  async edit(): Promise<void> {
+    // Loaded on demand, like the Report tab itself.
+    const { ReportPage } = await import('../report/report.page');
+    const modal = await this.modalCtrl.create({
+      component: ReportPage,
+      componentProps: { editItem: this.current() },
+    });
+    await modal.present();
+    const { data } = await modal.onWillDismiss<Item | null>();
+    if (data) {
+      this.current.set(data);
+      this.statusChanged = true;
+    }
+  }
+
+  async confirmDelete(): Promise<void> {
+    const alert = await this.alertCtrl.create({
+      header: 'Delete this report?',
+      message: 'It is removed for everyone, with its photo. This cannot be undone.',
+      buttons: [
+        { text: 'Cancel', role: 'cancel' },
+        { text: 'Delete', role: 'destructive' },
+      ],
+    });
+    await alert.present();
+    const { role } = await alert.onDidDismiss();
+    if (role !== 'destructive') {
+      return;
+    }
+
+    this.saving.set(true);
+    this.itemService.deleteItem(this.current().id).subscribe({
+      next: async (result) => {
+        this.saving.set(false);
+        await this.showToast(result.message ?? 'Report deleted.', 'success');
+        await this.modalCtrl.dismiss(true);
+      },
+      error: async (err) => {
+        this.saving.set(false);
+        await this.showToast(this.itemService.describeError(err), 'danger');
+      },
+    });
   }
 
   reopen(): void {

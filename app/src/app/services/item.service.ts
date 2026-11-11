@@ -28,28 +28,33 @@ export class ItemService {
 
   // POST /api/items.php as multipart/form-data so the photo can travel with the text fields.
   createItem(item: NewItem, photo: Blob | null): Observable<ApiResponse<Item>> {
-    const form = new FormData();
-    form.append('title', item.title);
-    form.append('description', item.description);
-    form.append('type', item.type);
-    form.append('category', item.category);
-    form.append('latitude', String(item.latitude));
-    form.append('longitude', String(item.longitude));
-    form.append('contact_info', item.contact_info);
-
-    if (photo) {
-      const extension = photo.type.split('/')[1] || 'jpg';
-      form.append('photo', photo, `photo.${extension}`);
-    }
-
     // No Content-Type header here: the browser adds multipart/form-data with the boundary itself.
-    return this.http.post<ApiResponse<Item>>(this.url, form).pipe(
+    return this.http.post<ApiResponse<Item>>(this.url, this.toForm(item, photo)).pipe(
       tap((result) => {
         if (result.data?.owner_token) {
           this.saveOwnerToken(result.data.id, result.data.owner_token);
         }
       }),
     );
+  }
+
+  // POST /api/items.php?id=N: edit a report this phone submitted. A new photo replaces the
+  // old one; removePhoto drops the old one without a replacement.
+  updateItem(id: number, item: NewItem, photo: Blob | null, removePhoto: boolean): Observable<ApiResponse<Item>> {
+    const form = this.toForm(item, photo);
+    form.append('owner_token', this.readOwnerTokens()[id] ?? '');
+    if (removePhoto && !photo) {
+      form.append('remove_photo', '1');
+    }
+    return this.http.post<ApiResponse<Item>>(this.url, form, { params: { id } });
+  }
+
+  // DELETE /api/items.php?id=N: removes a report this phone submitted, and its photo.
+  deleteItem(id: number): Observable<ApiResponse<null>> {
+    const body = { owner_token: this.readOwnerTokens()[id] ?? '' };
+    return this.http
+      .delete<ApiResponse<null>>(this.url, { params: { id }, body })
+      .pipe(tap(() => this.forgetOwnerToken(id)));
   }
 
   // PUT /api/items.php?id=N: mark a report resolved, or reopen it. Only works from the phone
@@ -92,6 +97,22 @@ export class ItemService {
     return 'Something went wrong. Please try again.';
   }
 
+  private toForm(item: NewItem, photo: Blob | null): FormData {
+    const form = new FormData();
+    form.append('title', item.title);
+    form.append('description', item.description);
+    form.append('type', item.type);
+    form.append('category', item.category);
+    form.append('latitude', String(item.latitude));
+    form.append('longitude', String(item.longitude));
+    form.append('contact_info', item.contact_info);
+    if (photo) {
+      const extension = photo.type.split('/')[1] || 'jpg';
+      form.append('photo', photo, `photo.${extension}`);
+    }
+    return form;
+  }
+
   // localStorage lives in the app's own storage on the phone; it is lost only if the
   // app's data is cleared or the app is uninstalled.
   private readOwnerTokens(): Record<string, string> {
@@ -108,6 +129,16 @@ export class ItemService {
       localStorage.setItem(OWNER_TOKENS_KEY, JSON.stringify({ ...this.readOwnerTokens(), [id]: token }));
     } catch {
       // Storage full or blocked: the report is still saved, it just can't be resolved from here.
+    }
+  }
+
+  private forgetOwnerToken(id: number): void {
+    try {
+      const tokens = this.readOwnerTokens();
+      delete tokens[id];
+      localStorage.setItem(OWNER_TOKENS_KEY, JSON.stringify(tokens));
+    } catch {
+      // Nothing to do: the report is already gone from the server.
     }
   }
 }

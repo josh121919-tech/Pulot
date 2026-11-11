@@ -10,6 +10,13 @@ const config: CapacitorConfig = {
     // "Http failure response ... 0" error seen when testing on the emulator in class.
     androidScheme: 'http',
   },
+  plugins: {
+    LocalNotifications: {
+      // White silhouette shown in the notification bar (android/app/src/main/res/drawable).
+      smallIcon: 'ic_stat_pickapp',
+      iconColor: '#2E7D32',
+    },
+  },
 };
 
 export default config;

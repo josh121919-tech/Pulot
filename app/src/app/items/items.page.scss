@@ -21,6 +21,11 @@
   position: relative;
 }
 
+.filter-count--alert {
+  background: var(--ion-color-danger);
+  color: var(--ion-color-danger-contrast);
+}
+
 .filter-count {
   position: absolute;
   top: 2px;

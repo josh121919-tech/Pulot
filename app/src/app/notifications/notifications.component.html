@@ -1,0 +1,38 @@
+<ion-header class="app-header ion-no-border">
+  <ion-toolbar>
+    <ion-title>Notifications</ion-title>
+    <ion-buttons slot="end">
+      @if (foundNotices.unreadCount() > 0) {
+        <ion-button (click)="foundNotices.markAllRead()">Mark all read</ion-button>
+      }
+      <ion-button (click)="close()" aria-label="Close">
+        <ion-icon slot="icon-only" name="close-outline"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="app-page">
+  <div class="notice-list">
+    @for (notice of foundNotices.notices(); track notice.id) {
+      <button class="notice surface ion-activatable" [class.notice--unread]="!notice.read" (click)="open(notice)">
+        <span class="notice-icon"><ion-icon name="hand-right-outline" aria-hidden="true"></ion-icon></span>
+        <span class="notice-body">
+          <strong class="notice-title">Someone found your item: {{ notice.title }}</strong>
+          <span class="notice-contact">{{ howToReach(notice) }}</span>
+          <span class="notice-when">{{ notice.found_at | relativeDate }}</span>
+        </span>
+        @if (!notice.read) {
+          <span class="notice-dot" aria-label="Unread"></span>
+        }
+        <ion-ripple-effect></ion-ripple-effect>
+      </button>
+    } @empty {
+      <div class="state-message">
+        <div class="state-icon"><ion-icon name="notifications-off-outline" aria-hidden="true"></ion-icon></div>
+        <h2>No notifications yet</h2>
+        <p>When someone taps "I found this" on one of your Lost reports, it shows up here.</p>
+      </div>
+    }
+  </div>
+</ion-content>

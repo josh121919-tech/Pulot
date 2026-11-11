@@ -1,7 +1,19 @@
 <ion-header class="app-header ion-no-border">
   <ion-toolbar>
-    <ion-title>PickApp</ion-title>
+    <ion-title>{{ resolvedTab ? 'Resolved' : 'PickApp' }}</ion-title>
     <ion-buttons slot="end">
+      <ion-button
+        class="filter-button"
+        (click)="openNotifications()"
+        [attr.aria-label]="
+          foundNotices.unreadCount() > 0 ? 'Notifications, ' + foundNotices.unreadCount() + ' unread' : 'Notifications'
+        "
+      >
+        <ion-icon slot="icon-only" name="notifications-outline"></ion-icon>
+        @if (foundNotices.unreadCount() > 0) {
+          <span class="filter-count filter-count--alert" aria-hidden="true">{{ foundNotices.unreadCount() }}</span>
+        }
+      </ion-button>
       <ion-button class="filter-button" (click)="filtersOpen.set(true)" aria-label="Filters">
         <ion-icon slot="icon-only" name="options-outline"></ion-icon>
         @if (activeFilterCount() > 0) {
@@ -45,16 +57,6 @@
       @if (date() !== 'any') {
         <button class="filter-chip" (click)="clearDate()" [attr.aria-label]="'Remove filter ' + dateLabels[date()]">
           {{ dateLabels[date()] }}
-          <ion-icon name="close" aria-hidden="true"></ion-icon>
-        </button>
-      }
-      @if (status() !== 'all') {
-        <button
-          class="filter-chip"
-          (click)="clearStatus()"
-          [attr.aria-label]="'Remove filter ' + statusLabels[status()]"
-        >
-          {{ statusLabels[status()] }}
           <ion-icon name="close" aria-hidden="true"></ion-icon>
         </button>
       }
@@ -121,7 +123,7 @@
           <div class="state-icon">
             <ion-icon [name]="isFiltered() ? 'search-outline' : 'file-tray-outline'" aria-hidden="true"></ion-icon>
           </div>
-          <h2>{{ isFiltered() ? 'No matches' : 'No reports yet' }}</h2>
+          <h2>{{ isFiltered() ? 'No matches' : resolvedTab ? 'Nothing resolved yet' : 'No open reports' }}</h2>
           <p>{{ emptyMessage() }}</p>
           @if (isFiltered()) {
             <ion-button shape="round" fill="outline" (click)="clearAll()">Clear search and filters</ion-button>
@@ -171,14 +173,6 @@
               <ion-select-option value="today">{{ dateLabels.today }}</ion-select-option>
               <ion-select-option value="week">{{ dateLabels.week }}</ion-select-option>
               <ion-select-option value="month">{{ dateLabels.month }}</ion-select-option>
-            </ion-select>
-          </ion-item>
-          <ion-item>
-            <ion-icon slot="start" name="checkmark-done-outline" aria-hidden="true"></ion-icon>
-            <ion-select label="Status" interface="popover" [value]="status()" (ionChange)="onStatusChange($event)">
-              <ion-select-option value="all">{{ statusLabels.all }}</ion-select-option>
-              <ion-select-option value="open">{{ statusLabels.open }}</ion-select-option>
-              <ion-select-option value="resolved">{{ statusLabels.resolved }}</ion-select-option>
             </ion-select>
           </ion-item>
         </ion-list>

@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, inject, input, signal, type OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { Camera } from '@capacitor/camera';
@@ -7,6 +7,7 @@ import { Geolocation } from '@capacitor/geolocation';
 import {
   ActionSheetController,
   IonButton,
+  IonButtons,
   IonContent,
   IonFooter,
   IonHeader,
@@ -22,6 +23,7 @@ import {
   IonTitle,
   IonToolbar,
   LoadingController,
+  ModalController,
   ToastController,
 } from '@ionic/angular';
 import { addIcons } from 'ionicons';
@@ -40,11 +42,20 @@ import {
 import { environment } from '../../environments/environment';
 import type { LatLng } from '../components/location-map/location-map.component';
 import { LocationMapComponent } from '../components/location-map/location-map.component';
-import { ITEM_CATEGORIES, formatContact, isValidPhone, type ContactMethod, type ItemType } from '../models/item.model';
+import {
+  ITEM_CATEGORIES,
+  formatContact,
+  isValidPhone,
+  parseContact,
+  type ContactMethod,
+  type Item,
+  type ItemType,
+} from '../models/item.model';
 import { HapticsService } from '../services/haptics.service';
 import { ItemService } from '../services/item.service';
 
 // Report tab: form + Camera + Geolocation/Leaflet, sent with POST /api/items.php.
+// The same form opens in a modal, filled in, when the reporter taps Edit on their report.
 @Component({
   selector: 'app-report',
   templateUrl: 'report.page.html',
@@ -52,6 +63,7 @@ import { ItemService } from '../services/item.service';
   imports: [
     FormsModule,
     IonButton,
+    IonButtons,
     IonContent,
     IonFooter,
     IonHeader,
@@ -69,15 +81,21 @@ import { ItemService } from '../services/item.service';
     LocationMapComponent,
   ],
 })
-export class ReportPage {
+export class ReportPage implements OnInit {
   private itemService = inject(ItemService);
   private haptics = inject(HapticsService);
   private actionSheetCtrl = inject(ActionSheetController);
   private loadingCtrl = inject(LoadingController);
   private toastCtrl = inject(ToastController);
   private router = inject(Router);
+  private modalCtrl = inject(ModalController);
 
   readonly categories = ITEM_CATEGORIES;
+
+  // Set through ModalController componentProps when editing an existing report.
+  editItem = input<Item | null>(null);
+  // The photo already on the server, shown until it is replaced or removed.
+  private keptPhotoUrl: string | null = null;
 
   // Form fields, bound with [(ngModel)].
   type: ItemType = 'lost';
@@ -116,6 +134,29 @@ export class ReportPage {
       mapOutline,
       sendOutline,
     });
+  }
+
+  // Fills the form from the report being edited.
+  ngOnInit(): void {
+    const item = this.editItem();
+    if (!item) {
+      return;
+    }
+    this.type = item.type;
+    this.title = item.title;
+    this.category = item.category;
+    this.description = item.description ?? '';
+    const contact = parseContact(item.contact_info);
+    this.contactMethod = contact.method ?? 'phone';
+    this.contactInfo = contact.value;
+    this.keptPhotoUrl = item.image_url;
+    this.photoPreview.set(item.image_url);
+    this.latitude.set(item.latitude);
+    this.longitude.set(item.longitude);
+  }
+
+  cancelEdit(): void {
+    this.modalCtrl.dismiss(null);
   }
 
   // ---------- Camera ----------
@@ -216,7 +257,9 @@ export class ReportPage {
       return;
     }
 
-    const loading = await this.loadingCtrl.create({ message: 'Submitting report...' });
+    const loading = await this.loadingCtrl.create({
+      message: this.editItem() ? 'Saving changes...' : 'Submitting report...',
+    });
     await loading.present();
 
     const item = {
@@ -228,6 +271,24 @@ export class ReportPage {
       longitude: this.longitude()!,
       contact_info: formatContact(this.contactMethod, this.contactInfo),
     };
+
+    const editing = this.editItem();
+    if (editing) {
+      // The old photo is removed only if the user took it off and did not pick a new one.
+      const removePhoto = this.keptPhotoUrl !== null && this.photoPreview() === null;
+      this.itemService.updateItem(editing.id, item, this.photoBlob, removePhoto).subscribe({
+        next: async (result) => {
+          await loading.dismiss();
+          await this.showToast(result.message ?? 'Report updated.', 'success');
+          await this.modalCtrl.dismiss(result.data ?? null);
+        },
+        error: async (err) => {
+          await loading.dismiss();
+          await this.showToast(this.itemService.describeError(err), 'danger');
+        },
+      });
+      return;
+    }
 
     this.itemService.createItem(item, this.photoBlob).subscribe({
       next: async (result) => {

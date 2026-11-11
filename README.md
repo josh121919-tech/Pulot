@@ -16,7 +16,7 @@ campus-lost-found/
 ├── api/
 │   ├── config.php                  DB connection (PDO), CORS allow-list, JSON helper
 │   ├── config.local.example.php    template for real credentials on a server
-│   └── items.php                   GET list / POST report (+ photo upload)
+│   └── items.php                   GET list / POST report (+ photo) / edit / DELETE / PUT status
 ├── sql/lost_found.sql              creates the campus_lost_found database and items table
 ├── sql/migrate_add_status.sql      adds the Resolved status to an older items table
 ├── sql/migrate_add_found_notice.sql  adds the "I found this" notice to an older items table
@@ -54,6 +54,8 @@ that file is git-ignored.
 | POST   | `/api/items.php`             | multipart: `title`, `description`, `type`, `category`, `latitude`, `longitude`, `contact_info`, optional `photo` file | 201 with the saved report and its `owner_token` |
 | PUT    | `/api/items.php?id=5`        | JSON: `{ "status": "resolved" or "open", "owner_token": "..." }` | 200 with the updated report; 403 for a wrong token |
 | PUT    | `/api/items.php?id=5`        | JSON: `{ "found_contact": "Phone: 0917..." }` (no token) | 200 with the report; 409 if it is not an open Lost report or already has a notice |
+| POST   | `/api/items.php?id=5`        | Same fields as creating a report, plus `owner_token`, an optional new `photo` and `remove_photo=1` | 200 "Report updated." with the report; 403 for a wrong token |
+| DELETE | `/api/items.php?id=5`        | JSON: `{ "owner_token": "..." }` | 200 "Report deleted." (the photo file is removed too); 403 for a wrong token |
 
 GET filters: `type` (lost/found), `status` (open/resolved), `category`, `q` (keyword in the
 title or description, up to 100 characters), `from` / `to` (ISO 8601 date-times, `to` exclusive).
@@ -62,10 +64,10 @@ Errors come back as `{ "success": false, "message": "...", "errors": { field: ".
 with status 400, 403, 404, 405, 413 (photo over 5 MB), 415 (not a JPEG/PNG/WebP), 422 (validation) or 500.
 Categories: Electronics, ID/Cards, Keys, Bags, Personal Belongings, Others.
 
-**Who can resolve a report.** There is no login, so POST creates a random `owner_token`,
+**Who can change a report.** There is no login, so POST creates a random `owner_token`,
 returns it once, and stores only its SHA-256 hash. The app keeps the token on the phone that
-submitted the report, so only that phone sees **Mark as resolved**. Clearing the app's data or
-reinstalling it loses the token.
+submitted the report, so only that phone sees **Mark as resolved**, **Edit** and **Delete**.
+Clearing the app's data or reinstalling it loses the token.
 
 ## 2. Run the app in the browser
 
@@ -116,14 +118,19 @@ plain-http XAMPP server on the LAN. With the default `https` scheme those calls 
 
 ## Usage
 
-- **Browse**: pull down to refresh, type in the search bar, use All / Lost / Found, and open
-  **Filters** (top right) for category, date and status. Tap a card for details and the map.
+- **Browse**: open reports. Pull down to refresh, type in the search bar, use
+  All / Lost / Found, and open **Filters** (top right) for category and date. Tap a card for
+  details and the map.
+- **Resolved**: the same list for reports whose item has been returned.
 - **I found this**: on someone else's open Lost report, tap **I found this** and leave a
-  contact number or Facebook name. The owner's phone vibrates and shows an alert with it the
-  next time PickApp checks: when the app opens, comes back to the front, or every 30 seconds
-  while it is open. (Alerts while the app is fully closed would need a push service.)
-- **Resolve**: open a report you submitted from this phone and tap **Mark as resolved**
-  (or **Reopen report**).
+  contact number or Facebook name. The owner's app picks it up the next time it checks: when
+  the app opens, comes back to the front, or every 30 seconds while it is open. Then the
+  phone vibrates on and off for up to a minute until the owner answers the alert, a
+  notification appears in the phone's notification bar (tap it to open the report), and the
+  notice is kept under the bell (top right of Browse) with an unread count. (Alerts while the
+  app is fully closed would need a push service such as Firebase.)
+- **Your reports**: open a report you submitted from this phone to **Mark as resolved**
+  (or **Reopen report**), **Edit** it (every field, the photo and the map pin) or **Delete** it.
 - **Feedback**: every message on the Report tab and the details screen comes with a short
   vibration that matches it: success, warning (something to fix) or error.
 - **Report**: choose Lost or Found, fill in the title and category, choose how people can
