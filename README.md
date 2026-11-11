@@ -132,7 +132,8 @@ plain-http XAMPP server on the LAN. With the default `https` scheme those calls 
 - **Resolved**: the same list for reports whose item has been returned.
 - **I found this**: on someone else's open Lost report, tap **I found this** and leave a
   contact number or Facebook name. The owner's app picks it up the next time it checks: when
-  the app opens, comes back to the front, or every 30 seconds while it is open. Then the
+  the app opens, comes back to the front, every 30 seconds while it is open, and
+  when Browse is pulled down to refresh or the bell is opened. Then the
   phone vibrates on and off for up to a minute until the owner answers the alert, a
   notification appears in the phone's notification bar (tap it to open the report), and the
   notice is kept under the bell (top right of Browse) with an unread count. (Alerts while the

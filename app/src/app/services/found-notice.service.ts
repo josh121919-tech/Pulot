@@ -1,8 +1,9 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
+import { App } from '@capacitor/app';
 import { Capacitor } from '@capacitor/core';
 import { LocalNotifications } from '@capacitor/local-notifications';
 import { AlertController, ModalController, ToastController } from '@ionic/angular';
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, timeout, type Observable } from 'rxjs';
 
 import { environment } from '../../environments/environment';
 import { ItemDetailComponent } from '../items/item-detail.component';
@@ -32,6 +33,9 @@ const NOTICES_KEY = `lostfound.foundNotices@${environment.apiUrl}`;
 // Ids announced by the first version of this feature, before the bell list existed.
 const OLD_SEEN_KEY = `lostfound.seenFoundNotices@${environment.apiUrl}`;
 const CHECK_EVERY_MS = 30_000;
+// A check request that has not answered by then is dropped, so a stalled connection (weak
+// signal, or the phone sleeping mid-request) cannot block every later check.
+const REQUEST_TIMEOUT_MS = 15_000;
 // Phone notification ids: a found notice uses the report id, a claim this plus the claim id.
 const CLAIM_NOTIFICATION_BASE = 1_000_000;
 
@@ -52,6 +56,9 @@ export class FoundNoticeService {
   private toastCtrl = inject(ToastController);
   private started = false;
   private checking = false;
+  // Whether the app is on screen. On a phone this comes from Capacitor's app state, because
+  // some Android phones do not update the page's visibility when the app is reopened.
+  private active = true;
 
   // Newest first.
   readonly notices = signal<FoundNotice[]>(this.readNotices());
@@ -65,17 +72,27 @@ export class FoundNoticeService {
     }
     this.started = true;
     void this.setUpPhoneNotifications();
-    void this.check();
+    void this.checkNow();
     setInterval(() => {
-      if (document.visibilityState === 'visible') {
-        void this.check();
+      if (this.active) {
+        void this.checkNow();
       }
     }, CHECK_EVERY_MS);
-    document.addEventListener('visibilitychange', () => {
-      if (document.visibilityState === 'visible') {
-        void this.check();
-      }
-    });
+    if (Capacitor.isNativePlatform()) {
+      void App.addListener('appStateChange', ({ isActive }) => {
+        this.active = isActive;
+        if (isActive) {
+          void this.checkNow();
+        }
+      });
+    } else {
+      document.addEventListener('visibilitychange', () => {
+        this.active = document.visibilityState === 'visible';
+        if (this.active) {
+          void this.checkNow();
+        }
+      });
+    }
   }
 
   // Opens the report a notice is about, with its latest data from the server.
@@ -114,13 +131,15 @@ export class FoundNoticeService {
     this.saveNotices(this.notices().map((notice) => (notice.id === id ? { ...notice, read: true } : notice)));
   }
 
-  private async check(): Promise<void> {
+  // Looks for new notices now. Also run when Browse is pulled to refresh and when the bell
+  // is opened, so the user can always check by hand.
+  async checkNow(): Promise<void> {
     if (this.checking || !this.itemService.hasReports()) {
       return;
     }
     this.checking = true;
     try {
-      const result = await firstValueFrom(this.itemService.getItems({ status: 'open' }));
+      const result = await this.fetch(this.itemService.getItems({ status: 'open' }));
       const mine = (result.data ?? []).filter((item) => this.itemService.isMine(item.id));
       for (const item of mine) {
         if (item.type === 'lost') {
@@ -166,7 +185,7 @@ export class FoundNoticeService {
     if (item.claim_count <= known) {
       return;
     }
-    const result = await firstValueFrom(this.itemService.getClaims(item.id));
+    const result = await this.fetch(this.itemService.getClaims(item.id));
     // The API lists newest first; announce them in the order they came.
     for (const claim of [...(result.data ?? [])].reverse()) {
       const key = `claim-${claim.id}`;
@@ -188,6 +207,10 @@ export class FoundNoticeService {
       this.saveNotices([notice, ...this.notices()]);
       await this.announce(notice);
     }
+  }
+
+  private fetch<T>(request: Observable<T>): Promise<T> {
+    return firstValueFrom(request.pipe(timeout(REQUEST_TIMEOUT_MS)));
   }
 
   private hasNotice(key: string): boolean {

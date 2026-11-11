@@ -204,9 +204,10 @@ export class ItemsPage {
     });
   }
 
-  // Pull-to-refresh.
+  // Pull-to-refresh. Also checks for new notices about the user's own reports.
   onRefresh(event: RefresherCustomEvent): void {
     this.loadItems(event);
+    void this.foundNotices.checkNow();
   }
 
   // The search bar waits 400 ms after the last key press (its debounce) before this runs.
@@ -267,8 +268,10 @@ export class ItemsPage {
     }
   }
 
-  // The bell: the list of "someone found your item" notices.
+  // The bell: the list of "someone found your item" and claim notices. Opening it also
+  // checks for new ones.
   async openNotifications(): Promise<void> {
+    void this.foundNotices.checkNow();
     const modal = await this.modalCtrl.create({ component: NotificationsComponent });
     await modal.present();
     await modal.onWillDismiss();
