@@ -3,6 +3,8 @@ import { IonTabs, IonTabBar, IonTabButton, IonIcon, IonLabel } from '@ionic/angu
 import { addIcons } from 'ionicons';
 import { listOutline, addCircleOutline } from 'ionicons/icons';
 
+import { FoundNoticeService } from '../services/found-notice.service';
+
 @Component({
   selector: 'app-tabs',
   templateUrl: 'tabs.page.html',
@@ -14,5 +16,7 @@ export class TabsPage {
 
   constructor() {
     addIcons({ listOutline, addCircleOutline });
+    // Watch for "someone found your item" notices for as long as the app is open.
+    inject(FoundNoticeService).start();
   }
 }

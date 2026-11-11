@@ -55,6 +55,8 @@ export interface Item {
   contact_info: string;
   status: ItemStatus;
   resolved_at: string | null; // ISO 8601, UTC; set when the reporter marks it resolved
+  found_contact: string | null; // "Phone: …" or "Facebook: …", left by someone who found a Lost item
+  found_at: string | null; // ISO 8601, UTC; when that finder left the notice
   created_at: string; // ISO 8601, UTC
   owner_token?: string; // only in the POST reply: the secret that lets this phone change the status
 }

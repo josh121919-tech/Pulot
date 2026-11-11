@@ -43,6 +43,21 @@
       </div>
     }
 
+    @if (foundContact(); as found) {
+      <div class="found-banner">
+        <ion-icon name="hand-right-outline" aria-hidden="true"></ion-icon>
+        <div class="found-text">
+          <strong>{{ isMine() ? 'Good news: someone found your item' : 'Someone says they found this' }}</strong>
+          <span class="found-when">{{ current().found_at | date: 'MMM d, h:mm a' }}</span>
+          @if (found.method === 'phone') {
+            <a class="info-link" [href]="'tel:' + foundPhoneDigits()">Call or text {{ found.value }}</a>
+          } @else {
+            <span>Facebook: {{ found.value }}</span>
+          }
+        </div>
+      </div>
+    }
+
     <div class="info-card surface">
       <div class="info-row">
         <div class="info-icon">
@@ -90,6 +105,23 @@
     <div class="map-card surface">
       <app-location-map [latitude]="current().latitude" [longitude]="current().longitude" [type]="current().type" />
     </div>
+
+    @if (canSayFound()) {
+      <div class="owner-card surface">
+        <p class="owner-note">
+          <ion-icon name="hand-right-outline" aria-hidden="true"></ion-icon>
+          Have this item? Let the owner know.
+        </p>
+        <ion-button expand="block" shape="round" color="success" [disabled]="saving()" (click)="sayFound()">
+          @if (saving()) {
+            <ion-spinner slot="start" name="crescent"></ion-spinner>
+          } @else {
+            <ion-icon slot="start" name="hand-right-outline"></ion-icon>
+          }
+          I found this
+        </ion-button>
+      </div>
+    }
 
     <!-- Only the phone that submitted the report holds its owner token -->
     @if (isMine()) {

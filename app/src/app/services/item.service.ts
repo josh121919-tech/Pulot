@@ -59,6 +59,17 @@ export class ItemService {
     return this.http.put<ApiResponse<Item>>(this.url, body, { params: { id } });
   }
 
+  // PUT /api/items.php?id=N with { found_contact }: someone who found a Lost item tells the
+  // owner how to reach them. No token: anyone who has the item can say so.
+  reportFound(id: number, foundContact: string): Observable<ApiResponse<Item>> {
+    return this.http.put<ApiResponse<Item>>(this.url, { found_contact: foundContact }, { params: { id } });
+  }
+
+  // True when this phone has submitted at least one report to this server.
+  hasReports(): boolean {
+    return Object.keys(this.readOwnerTokens()).length > 0;
+  }
+
   // True when this phone submitted the report and can change its status.
   isMine(id: number): boolean {
     return Boolean(this.readOwnerTokens()[id]);

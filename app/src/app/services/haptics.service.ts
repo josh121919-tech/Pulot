@@ -18,6 +18,15 @@ export class HapticsService {
     return this.notify(NotificationType.Error);
   }
 
+  // A longer buzz that gets attention when news arrives, e.g. someone found the user's item.
+  async attention(): Promise<void> {
+    try {
+      await Haptics.vibrate({ duration: 800 });
+    } catch {
+      // No vibration motor: the alert on screen is enough.
+    }
+  }
+
   private async notify(type: NotificationType): Promise<void> {
     try {
       await Haptics.notification({ type });

@@ -76,6 +76,34 @@
   }
 }
 
+// Shown when someone has said they found this Lost item.
+.found-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: rgba(var(--ion-color-success-rgb), 0.12);
+  line-height: 1.4;
+
+  ion-icon {
+    flex-shrink: 0;
+    font-size: 24px;
+    color: var(--ion-color-success);
+  }
+}
+
+.found-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.found-when {
+  font-size: 0.82rem;
+  color: var(--app-muted);
+}
+
 .info-card {
   padding: 4px 16px;
 }

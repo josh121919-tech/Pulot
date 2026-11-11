@@ -19,6 +19,7 @@ campus-lost-found/
 │   └── items.php                   GET list / POST report (+ photo upload)
 ├── sql/lost_found.sql              creates the campus_lost_found database and items table
 ├── sql/migrate_add_status.sql      adds the Resolved status to an older items table
+├── sql/migrate_add_found_notice.sql  adds the "I found this" notice to an older items table
 ├── uploads/                        saved photos (.htaccess blocks scripts and listing)
 └── app/                            the Ionic project
     ├── src/app/services/item.service.ts
@@ -52,6 +53,7 @@ that file is git-ignored.
 | GET    | `/api/items.php?q=umbrella&category=Bags&status=open&from=2026-10-25T00:00:00%2B08:00` | – | 200, filters combined with AND (any can be left out) |
 | POST   | `/api/items.php`             | multipart: `title`, `description`, `type`, `category`, `latitude`, `longitude`, `contact_info`, optional `photo` file | 201 with the saved report and its `owner_token` |
 | PUT    | `/api/items.php?id=5`        | JSON: `{ "status": "resolved" or "open", "owner_token": "..." }` | 200 with the updated report; 403 for a wrong token |
+| PUT    | `/api/items.php?id=5`        | JSON: `{ "found_contact": "Phone: 0917..." }` (no token) | 200 with the report; 409 if it is not an open Lost report or already has a notice |
 
 GET filters: `type` (lost/found), `status` (open/resolved), `category`, `q` (keyword in the
 title or description, up to 100 characters), `from` / `to` (ISO 8601 date-times, `to` exclusive).
@@ -116,6 +118,10 @@ plain-http XAMPP server on the LAN. With the default `https` scheme those calls 
 
 - **Browse**: pull down to refresh, type in the search bar, use All / Lost / Found, and open
   **Filters** (top right) for category, date and status. Tap a card for details and the map.
+- **I found this**: on someone else's open Lost report, tap **I found this** and leave a
+  contact number or Facebook name. The owner's phone vibrates and shows an alert with it the
+  next time PickApp checks: when the app opens, comes back to the front, or every 30 seconds
+  while it is open. (Alerts while the app is fully closed would need a push service.)
 - **Resolve**: open a report you submitted from this phone and tap **Mark as resolved**
   (or **Reopen report**).
 - **Feedback**: every message on the Report tab and the details screen comes with a short
