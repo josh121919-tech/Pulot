@@ -255,6 +255,7 @@ export class FoundNoticeService {
             body,
             smallIcon: 'ic_stat_pickapp',
             extra: { itemId: notice.id },
+            isExactNotification: false,
           },
         ],
       });
