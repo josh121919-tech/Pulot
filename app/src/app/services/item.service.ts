@@ -6,7 +6,9 @@ import { environment } from '../../environments/environment';
 import type { ApiResponse, Item, ItemFilters, ItemStatus, NewItem } from '../models/item.model';
 
 // Where this phone keeps the owner tokens of the reports it submitted ({ "12": "token" }).
-const OWNER_TOKENS_KEY = 'lostfound.ownerTokens';
+// One list per server: report ids restart at 1 on every database, so a token saved while the
+// app used the PC's XAMPP server must not count for report 1 on the online server.
+const OWNER_TOKENS_KEY = `lostfound.ownerTokens@${environment.apiUrl}`;
 
 @Injectable({ providedIn: 'root' })
 export class ItemService {
